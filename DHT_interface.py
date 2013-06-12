@@ -3,15 +3,17 @@ import socket
 
 class DHTInterface(object):
 
-    def __init__(self, url):
-        if isinstance(url, bytes):
+    def __init__(self, url, timeout = None):
+        if not isinstance(url, str):
             url = url.decode('ASCII')
         if not url.endswith('/'):
             url += '/'
         self.url = url
+        self.timeout = timeout
 
     def open(self, path, data = None):
-        response = urllib.request.urlopen(urllib.parse.urljoin(self.url, path), data)
+        fullurl = urllib.parse.urljoin(self.url, path)
+        response = urllib.request.urlopen(fullurl, data, self.timeout)
         return response.read()
 
     @property

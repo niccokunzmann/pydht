@@ -5,16 +5,29 @@ import hashlib
 import base64
 import io
 import DHT_interface
+import multiprocessing
 
 PORT = 8000
 
 def add_peer(url):
-    peers.append(DHT_interface.DHTInterface(url))
+    peers.append(DHT_interface.DHTInterface(url, 2))
 
 peers = []
 
 add_peer('http://' + socket.gethostname() + ':' + str(PORT))
 
+pool = multiprocessing.Pool(10)
+
+def ask_peer_for(peer, hash):
+    return peer.get(hash)
+
+def ask_peers_for(hash):
+    results = [pool.apply_async(ask_peer_for, (peer, hash)) for peer in peers]
+    for result in results:
+        if result.get():
+            return result
+    return 
+        
 strings = {}
 
 HASHBITS = 256 # bit
@@ -58,9 +71,10 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
         hash = self.hash
         file = get_file(hash)
         if file is None:
-            for peer in peers:
-                pass
-            return self.send_error(404, "file not found")
+            add(ask_peers_for(hash))
+            file = get_file(hash)
+            if file is None:
+                return self.send_error(404, "file not found")
         self.send_response(200)
         self.send_header("Content-Length", str(size(hash)))
         #self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
