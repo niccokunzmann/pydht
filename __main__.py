@@ -7,6 +7,8 @@ import io
 import DHT_interface
 import multiprocessing
 
+# TODO: redirect posts, redirect find
+
 PORT = 8000
 
 def add_peer(url):
