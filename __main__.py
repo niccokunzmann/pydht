@@ -6,8 +6,24 @@ import argparse
 
 import peers
 import dht
+import contextlib
+import threading
 
 # TODO: redirect posts, redirect find
+
+asking_for = set()
+asking_for_lock = threading.Lock()
+
+@contextlib.contextmanager
+def wait_for(hash):
+    while 1:
+        with asking_for_lock:
+            if hash not in asking_for:
+                asking_for.add(hash)
+                break
+        time.sleep(0.001)
+    yield
+    asking_for.remove(hash) 
 
 class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
 
@@ -24,10 +40,14 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
         hash = self.hash
         file = dht.get_file(hash)
         if file is None:
-            dht.add(peers.ask_for(hash))
-            file = get_file(hash)
-            if file is None:
+            redirect = peers.get_redirect(hash)
+            if redirect is None:
                 return self.send_error(404, "file not found")
+            self.send_response(301)
+            self.send_header("Location", redirect)
+            self.end_headers()
+            return None
+            return 
         self.send_response(200)
         self.send_header("Content-Length", str(dht.size(hash)))
         self.end_headers()
@@ -39,14 +59,10 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def get_peers(self):
         content = b'\r\n'.join(map(lambda peer: peer.url_bytes, peers.all()))
-        file = io.BytesIO(content)
-        self.send_response(200)
-        self.send_header("Content-Length", str(len(content)))
-        self.end_headers()
-        return file
+        return self.answer_content(content)
     head_peers = get_peers
 
-    methods = ['peers', 'hash']
+    methods = ['peers', 'hash', 'hashes']
 
     def send_head(self):
         print("path: {}".format(repr(self.path)))
@@ -65,8 +81,17 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
     def posted_length(self):
         return int(self.headers.get('content-length', 0))
 
-    posted_content = b''
-
+    def answer_content(self, content, encoding = 'ASCII', content_type = None):
+        if isinstance(content, str):
+            content = content.encode(encoding)
+        if content_type is None:
+            content_type = self.guess_type('')
+        self.send_response(200)
+        self.send_header("Content-Length", str(len(content)))
+        self.send_header("Content-Type", '{}; charset={}'.format(content_type, encoding))
+        self.end_headers()
+        return io.BytesIO(content)
+        
     def post_peers(self):
         posted_peers = self.posted_content.splitlines()
         print('new posted peers: {}'.format(self.posted_content.splitlines()))
@@ -77,13 +102,18 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def post_hash(self):
         hash = dht.add(self.posted_content)
-        self.send_response(200)
-        self.send_header("Content-Length", str(len(hash)))
-        self.end_headers()
-        return io.BytesIO(hash.encode('ASCII'))
+        return self.answer_content(hash)
         
+    def is_hashes(self):
+        return self.path == '/'
+
+    def get_hashes(self):
+        hashes = '\r\n'.join(dht.all())
+        return self.answer_content(hashes)
+
 
 if __name__ == '__main__':
+    import threading
     parser = argparse.ArgumentParser()
     parser.add_argument('port', action='store',
                         default=8000, type=int,

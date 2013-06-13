@@ -25,7 +25,12 @@ def size(hash):
     return len(get(hash))
 
 def is_hex(string):
-    return all(letter in '0123456789abcdef' for letter in string.lower())
+    return _all([letter in '0123456789abcdef' for letter in string.lower()])
 
 def is_hash(string):
     return len(string) == HASHBYTES and is_hex(string)
+
+_all = all
+def all():
+    # must be iterable and have length
+    return strings.keys()
