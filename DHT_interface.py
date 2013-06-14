@@ -1,8 +1,11 @@
 import urllib.request
 import socket
 import dht
+import time
 
 class DHTInterface(object):
+
+    update_hashes_seconds = 1
 
     def __init__(self, url, timeout = None):
         if not isinstance(url, str):
@@ -11,6 +14,8 @@ class DHTInterface(object):
             url += '/'
         self.url = url
         self.timeout = timeout
+        self._hashes = set()
+        self._hashes_last_update = 0
 
     def fullurl(self, path):
         return urllib.parse.urljoin(self.url, path)
@@ -65,9 +70,16 @@ class DHTInterface(object):
 ##            traceback.print_exc()
 
     def hashes(self):
-        response = self.open('')
-        if response is None: return []
-        return [hash for hash in response.split('\r\n') if dht.is_hash(hash)]
+        if self._hashes_last_update + self.update_hashes_seconds < time.time():
+            self._hashes_last_update = time.time()
+            response = self.open('')
+            if response is None: return self._hashes
+            _hashes = set()
+            for hash in response.split('\r\n'):
+                if dht.is_hash(hash):
+                    _hashes.add(hash)
+            self._hashes = _hashes
+        return self._hashes
 
     def knows(self, hash):
         return hash in self.hashes()
@@ -101,10 +113,8 @@ if __name__ == '__main__':
 
     def test_hashes():
         print('hashes: {}'.format(d.hashes()))
-        hash = d.add('test!!!')
+        hash = d.add(':)')
         print('hashes: {}'.format(d.hashes()))
-
-
 
     def test_redirect():
         hash = d1.add('hallihallo')

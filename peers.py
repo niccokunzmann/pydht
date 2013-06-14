@@ -2,11 +2,16 @@ import multiprocessing
 import DHT_interface
 
 def add(url):
-    i = DHT_interface.DHTInterface(url, 2)
-    if i not in peers:
-        peers.append(i)
+    peer = DHT_interface.DHTInterface(url, 2)
+    if peer not in peers:
+        peers[peer] = peer
+    return peers[peer]
 
-peers = []
+
+
+peers = dict()
+
+hash_to_peer = {} # maps hash to peers
 
 def ask_for(hash):
     for peer in all():
@@ -22,4 +27,4 @@ def get_redirect(hash):
             return peer.fullurl(hash)
 
 def all():
-    return peers[:]
+    return list(peers)

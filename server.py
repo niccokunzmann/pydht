@@ -11,19 +11,7 @@ import threading
 
 # TODO: redirect posts, redirect find
 
-asking_for = set()
-asking_for_lock = threading.Lock()
 
-@contextlib.contextmanager
-def wait_for(hash):
-    while 1:
-        with asking_for_lock:
-            if hash not in asking_for:
-                asking_for.add(hash)
-                break
-        time.sleep(0.001)
-    yield
-    asking_for.remove(hash) 
 
 class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
 
