@@ -32,19 +32,25 @@ class InFileSystemMixin:
         with open(tempname, 'wb') as to_file:
             hash = self.get_hash_from_file(file, to_file.write)
         path = self._path_for_hash(hash)
-        os.rename(tempname, path)
+        try: os.rename(tempname, path)
+        except FileExistsError: os.remove(tempname)
         return hash
             
     def _add_files(self, file):
         if file.name is None:
             return self._add_readable(file)
         hash = get_hash_from_file(file)
-        os.rename(to_file.name, self._path_for_hash(hash))
+        try: os.rename(to_file.name, self._path_for_hash(hash))
+        except FileExistsError: os.remove(to_file.name)
 
     def get_hash_from_file(self, file, write = None):
+        """=> the hash of a files content
+
+the file must support read()"""
         hash = hashing.algorithm()
         while 1:
-            data = file.read(1024)
+            try: data = file.read(1024)
+            except EOFError: break
             hash.update(data)
             if write: write(data)
             if len(data) < 1024:
@@ -74,4 +80,5 @@ class InFileSystemMixin:
     def get(self, hash):
         return self.get_file(hash)
 
+    
 __all__ = ['InFileSystemMixin']

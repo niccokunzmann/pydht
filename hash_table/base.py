@@ -88,7 +88,7 @@ class HashTableBase:
         return len(self.get_bytes(hash))
 
     def hashes(self):
-        return self._hashes()
+        return HashesIterator(self._hashes)
     
     def _hashes(self):
         raise NotImplementedError()
@@ -125,5 +125,46 @@ class HashTableBase:
 
     def _add_hash_table_file(self, file):
         self.add(file)
+
+
+class HashesIterator:
+    """a hashes iterator with a length
+
+once length is determined a number of length hashes is returned"""
+    def __init__(self, iterator):
+        self._iterator = iterator
+        self._length = None
+
+    def __len__(self):
+        """len(table.hashes())"""
+        if self._length is None:
+            length = 0
+            for x in self:
+                length += 1
+            self._length = length
+        return self._length
+
+    def __iter__(self):
+        """for hash in table.hashes()"""
+        length = 0
+        hash = None
+        for hash in self._iterator():
+            if self._length is not None and length >= self._length:
+                return 
+            yield hash
+            length += 1
+        if self._length is not None:
+            if hash is None:
+                hash = hashing.algorithm('').hexdigest()
+            for x in range(length, self._length):
+                yield hash
+        return
+
+    def __contains__(self, element):
+        for contained_element in self:
+            if element == contained_element:
+                return True
+        return False
+
 
 __all__ = ['HashTableBase']

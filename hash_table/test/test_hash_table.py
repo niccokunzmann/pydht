@@ -90,7 +90,7 @@ def test_open_to_store_not_ended(ht, string):
     f = ht.open()
     f.write(string)
     with raises(HashNotFound):
-        ht.get(hashed(string)) == string
+        ht.get(hashed(string))
 
 def test_open_with_writes_string(ht, string):
     with ht.open() as f:
@@ -101,4 +101,44 @@ def test_string_not_avalable_in_with(ht, string):
     with ht.open() as f:
         f.write(string)
         with raises(HashNotFound):
-            ht.get(hashed(string)) == string
+            ht.get(hashed(string))
+
+def test_add_twice_works(ht, string):
+    ht.add(string)
+    ht.add(string)
+    assert ht.get_bytes(hashed(string)) == string
+
+def test_open_two_files_with_different_content(ht, string):
+    pass
+
+def test_open_two_files_with_same_content(ht, string):
+    pass
+
+def test_empty_hashes(ht):
+    assert len(ht.hashes()) == 0
+
+def test_add_increases_hashes(ht, string):
+    ht.add(string)
+    ht.add(string)
+    assert len(ht.hashes()) == 1
+
+def test_hashes_include_hash_of_string(ht, string):
+    ht.add(string)
+    print(hashed(string) , list(ht.hashes()))
+    assert hashed(string) in ht.hashes()
+
+def test_size_of_dht_changes_when_iterating_hashes(ht, string):
+    hashes = ht.hashes()
+    len(hashes)
+    ht.add(string)
+    for x in hashes:
+        assert False, x
+    assert len(hashes) == 0
+
+
+
+
+
+
+
+
