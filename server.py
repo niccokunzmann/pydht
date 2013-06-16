@@ -1,13 +1,9 @@
-#!/usr/bin/python3
 import socket
 import http.server
 import io
-import argparse
 
-import peers
-import dht
-import contextlib
-import threading
+from . import peers
+from . import dht
 
 # TODO: redirect posts, redirect find
 
@@ -26,16 +22,15 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def get_hash(self):
         hash = self.hash
-        file = dht.get_file(hash)
-        if file is None:
+        if not dht.knows(hash):
             redirect = peers.get_redirect(hash)
             if redirect is None:
                 return self.send_error(404, "file not found")
             self.send_response(301)
             self.send_header("Location", redirect)
             self.end_headers()
-            return None
             return 
+        file = dht.get_file(hash)
         self.send_response(200)
         self.send_header("Content-Length", str(dht.size(hash)))
         self.end_headers()
@@ -96,12 +91,12 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
         return self.path == '/'
 
     def get_hashes(self):
-        hashes = '\r\n'.join(dht.all())
+        # does not have to load everything into memory
+        hashes = '\r\n'.join(dht.hashes())
         return self.answer_content(hashes)
 
-
-if __name__ == '__main__':
-    import threading
+def main():
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('port', action='store',
                         default=8000, type=int,
@@ -110,3 +105,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     peers.add('http://' + socket.gethostname() + ':' + str(args.port))
     http.server.test(DHTRequestHandler, port = args.port)
+
+
+    

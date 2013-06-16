@@ -135,7 +135,40 @@ def test_size_of_dht_changes_when_iterating_hashes(ht, string):
         assert False, x
     assert len(hashes) == 0
 
+def test_ht_does_not_know(ht, string):
+    assert not ht.knows(hashed(string))
 
+def test_ht_knows(ht, string):
+    ht.add(string)
+    assert ht.knows(hashed(string))
+
+## used bytes
+
+def test_used_file_bytes_is_0(ht):
+    assert ht.used_file_bytes() == 0
+
+def test_used_file_bytes(fht, string):
+    fht.add(string)
+    assert fht.used_file_bytes() == len(string)
+    fht.add(b'0' * 1000)
+    assert fht.used_file_bytes() == len(string) + 1000
+
+def test_memory_is_not_on_file_system(mht, string):
+    mht.add(string)
+    assert mht.used_file_bytes() == 0
+
+def test_bytes_in_memory_is_0(ht):
+    assert ht.used_memory_bytes() == 0
+
+def test_used_memory_bytes(mht, string):
+    mht.add(string)
+    assert mht.used_memory_bytes() == len(string)
+    mht.add(b'0' * 1000)
+    assert mht.used_memory_bytes() == len(string) + 1000
+
+def test_file_system_is_not_in_memory(fht, string):
+    fht.add(string)
+    assert fht.used_memory_bytes() == 0
 
 
 

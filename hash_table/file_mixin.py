@@ -80,5 +80,11 @@ the file must support read()"""
     def get(self, hash):
         return self.get_file(hash)
 
+    def _used_file_bytes(self):
+        size = 0
+        for hash in self.hashes():
+            try: size += os.path.getsize(self._path_for_hash(hash))
+            except (): pass # File not found
+        return size
     
 __all__ = ['InFileSystemMixin']

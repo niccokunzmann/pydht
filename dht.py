@@ -1,36 +1,11 @@
-import hashlib
-import base64
-import io
+import pydht.hash_table as hash_table
 
-strings = {}
+ht = hash_table.InMemory()
 
-HASHBITS = 256 # bit
-HASHBYTES = int(HASHBITS / 8 * 2) # hex encoded
-
-def add(string):
-    hash = hashlib.sha256(string).hexdigest()
-    strings[hash] = string
-    return hash
-
-def get(hash):
-    assert len(hash) == HASHBYTES, 'expected sha256 hash with hex encoding but got {}'.format(hash)
-    return strings.get(hash.lower(), None)
-
-def get_file(hash):
-    string = get(hash)
-    if string is not None:
-        return io.BytesIO(string)
-
-def size(hash):
-    return len(get(hash))
-
-def is_hex(string):
-    return _all([letter in '0123456789abcdef' for letter in string.lower()])
-
-def is_hash(string):
-    return len(string) == HASHBYTES and is_hex(string)
-
-_all = all
-def all():
-    # must be iterable and have length
-    return strings.keys()
+add = ht.add
+get = ht.get_bytes
+get_file = ht.get_file
+size = ht.size
+knows = ht.knows
+is_hash = ht.is_hash
+hashes = ht.hashes

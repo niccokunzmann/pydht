@@ -69,6 +69,11 @@ class HashTableBase:
         assert self.is_readable(file)
         return file
 
+    def get(self, hash):
+        raise NotImplementedError('This should be implemented like get_file'\
+                                  ' or get_bytes depending on what is less '\
+                                  'effort.')
+
     def error_hash_not_found(self, hash, traceback = None):
         error = HashNotFound('hash {hash} is not in {self}'.format(**locals()))
         raise error.with_traceback(traceback)
@@ -126,6 +131,23 @@ class HashTableBase:
     def _add_hash_table_file(self, file):
         self.add(file)
 
+    def _used_memory_bytes(self):
+        return 0
+    
+    def used_memory_bytes(self):
+        value = self._used_memory_bytes()
+        assert isinstance(value, int)
+        assert value >= 0
+        return value
+
+    def _used_file_bytes(self):
+        return 0
+    
+    def used_file_bytes(self):
+        value = self._used_file_bytes()
+        assert isinstance(value, int)
+        assert value >= 0
+        return value
 
 class HashesIterator:
     """a hashes iterator with a length

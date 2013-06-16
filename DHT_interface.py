@@ -121,7 +121,7 @@ if __name__ == '__main__':
         d.add_peers([d1])
         print("hallihallo == {}".format(d.get(hash)))
 
-##    test_peers()
-##    test_store()
-##    test_hashes()
+    test_peers()
+    test_store()
+    test_hashes()
     test_redirect()

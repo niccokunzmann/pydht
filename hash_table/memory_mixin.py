@@ -28,4 +28,10 @@ class InMemoryMixin:
     def get(self, hash):
         return self.get_bytes(hash)
 
+    def _used_memory_bytes(self):
+        size = 0
+        for data in self._content.values():
+            size += len(data)
+        return size
+
 __all__ = ['InMemoryMixin']
