@@ -1,22 +1,8 @@
-import hashlib
 import io
 import os
-import pydht.hash_table_file as hash_table_file
-import shutil
-import tempfile
 
-HASHBITS = 256 # bit
-HASHBYTES = int(HASHBITS / 8 * 2) # hex encoded
-
-def is_hex(string):
-    return all([letter in '0123456789abcdef' for letter in string.lower()])
-
-def is_hash(string):
-    assert isinstance(string, str)
-    return len(string) == HASHBYTES and is_hex(string)
-
-class HashNotFound(KeyError):
-    pass
+from . import hashing
+from .errors import HashNotFound
 
 class HashTableBase:
 
@@ -59,7 +45,7 @@ class HashTableBase:
     def _add_bytes(self, data):
         return self._add_readable(io.BytesIO(data))
 
-    is_hash = staticmethod(is_hash)
+    is_hash = staticmethod(hashing.is_hash)
 
     def get_bytes(self, hash):
         assert self.is_hash(hash)
@@ -139,104 +125,5 @@ class HashTableBase:
 
     def _add_hash_table_file(self, file):
         self.add(file)
-        
-class InMemoryMixin:
-    def __init__(self):
-        super().__init__()
-        self._content = {}
 
-    def _add_bytes(self, bytes):
-        hash = hashlib.sha256(bytes).hexdigest()
-        self._content[hash] = bytes
-        return hash
-
-    def _get_bytes(self, hash):
-        return self._content.get(hash)
-
-    def _hashes(self):
-        return self._content.keys()
-
-    def _remove(self, hash):
-        self._content.pop(hash)
-
-    def _open(self):
-        return hash_table_file.BytesIO(self)
-
-    def get(self, hash):
-        return self.get_bytes(hash)
-
-
-class InFileSystemMixin:
-
-    def __init__(self, directory):
-        super().__init__()
-        self._directory = directory
-
-    def _path_for_hash(self, hash):
-        directory = os.path.join(self._directory, hash[:2])
-        if not os.path.isdir(directory):
-            os.makedirs(directory)
-        return os.path.join(directory, hash[2:])
-
-    def _open_hash_file(self, hash, mode):
-        path = self._path_for_hash(hash)
-        return open(path, mode)
-        
-    def _get_file(self, hash):
-        try:
-            return self._open_hash_file(hash, 'rb')
-        except FileNotFoundError:
-            return None
-
-    def _add_readable(self, file):
-        tempname = tempfile.mktemp()
-        with open(tempname, 'wb') as to_file:
-            hash = self.get_hash_from_file(file, to_file.write)
-        path = self._path_for_hash(hash)
-        os.rename(tempname, path)
-        return hash
-            
-    def _add_hash_table_file(self, file):
-        if file.name is None:
-            return self._add_readable(file)
-        hash = get_hash_from_file(file)
-        os.rename(to_file.name, self._path_for_hash(hash))
-
-    def get_hash_from_file(self, file, write = None):
-        hash = hashlib.sha256()
-        while 1:
-            data = file.read(1024)
-            hash.update(data)
-            if write: write(data)
-            if len(data) < 1024:
-                break
-        return hash.hexdigest()
-
-    def _hashes(self):
-        dirs = os.listdir(self._directory)
-        for dir in dirs:
-            files = os.listdir(os.path.join(self._directory, dir))
-            for file in files:
-                yield dir + file
-        return
-
-    def _size(self, hash):
-        try:
-            return os.path.getsize(self._path_for_hash(hash))
-        except FileNotFoundError:
-            return None
-
-    def _remove(self, hash):
-        os.remove(self._path_for_hash(hash))
-
-    def _open(self):
-        return hash_table_file.SpooledTemporaryFile(self)
-
-    def get(self, hash):
-        return self.get_file(hash)
-
-class InFileSystem(InFileSystemMixin, HashTableBase):
-    pass
-
-class InMemory(InMemoryMixin, HashTableBase):
-    pass
+__all__ = ['HashTableBase']

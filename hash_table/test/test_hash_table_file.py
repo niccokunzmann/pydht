@@ -1,5 +1,5 @@
 from pytest import *
-from pydht.hash_table_file import *
+from pydht.hash_table.files import *
 import hashlib
 import io
 import os

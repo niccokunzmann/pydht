@@ -30,3 +30,5 @@ class BytesIO(HashTableFileMixin, io.BytesIO):
 
 class SpooledTemporaryFile(HashTableFileMixin, tempfile.SpooledTemporaryFile):
     pass
+
+__all__ = ['BytesIO', 'SpooledTemporaryFile']
