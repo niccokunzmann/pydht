@@ -7,25 +7,32 @@ from .errors import HashNotFound
 class HashTableBase:
 
     @staticmethod
-    def is_readable(file):
+    def is_readable_file(file):
+        """=> whether it can be read from the object"""
         return hasattr(file, 'read') and callable(file.read)
 
     @staticmethod
-    def is_writable(file):
+    def is_writable_file(file):
+        """=> whether it can be written to the object"""
         return hasattr(file, 'read') and callable(file.read)
 
     @staticmethod
-    def is_closable(file):
+    def is_closable_file(file):
+        """=> whether the object can be closed"""
         return hasattr(file, 'close') and callable(file.close)
 
     @staticmethod
     def is_path(path):
-        return os.path.isfile(path)
+        """=> whether the object represents a path on the file system"""
+        return isinstance(path, str) and os.path.isfile(path)
 
     def add(self, data):
+        """=> the hash ob the object
+Add an object to the hash table.
+Currently suported are bytes, readables, paths"""
         if isinstance(data, bytes):
             return self._add_bytes(data)
-        if self.is_readable(data):
+        if self.is_readable_file(data):
             return self._add_readable(data)
         if self.is_path(data):
             self._add_path(data)
@@ -36,18 +43,23 @@ class HashTableBase:
                          'It should be bytes or have a read method.'
 
     def _add(self, data_or_file):
+        """replace to add an other object than mentioned in add"""
         raise ValueError(self.WRONG_ADD_ARGUMENT.format(
                             object = data_or_file, type = type(data_or_file)))
 
     def _add_readable(self, file):
+        """replace to add a file better than reading everything into memory"""
         return self.add(file.read())
     
     def _add_bytes(self, data):
+        """replace to add a bytes better than putting them into a BytesIO"""
         return self._add_readable(io.BytesIO(data))
 
     is_hash = staticmethod(hashing.is_hash)
 
     def get_bytes(self, hash):
+        """=> the bytes with for hash
+May raise HashNotFound."""
         assert self.is_hash(hash)
         data = self._get_bytes(hash)
         if data is None:
@@ -56,32 +68,39 @@ class HashTableBase:
         return data
 
     def _get_bytes(self, hash):
+        """replace to get bytes better than reading them from a file"""
         result = self.get_file(hash)
         if result:
             return result.read()
         return result
 
     def get_file(self, hash):
+        """=> a file with the content for hash
+May raise HasNotFound."""
         assert self.is_hash(hash)
         file = self._get_file(hash)
         if file is None:
             self.error_hash_not_found(hash)
-        assert self.is_readable(file)
+        assert self.is_readable_file(file)
         return file
 
     def get(self, hash):
+        """replac!"""
         raise NotImplementedError('This should be implemented like get_file'\
                                   ' or get_bytes depending on what is less '\
                                   'effort.')
 
     def error_hash_not_found(self, hash, traceback = None):
+        """raises HashNotFound."""
         error = HashNotFound('hash {hash} is not in {self}'.format(**locals()))
         raise error.with_traceback(traceback)
 
     def _get_file(self, hash):
+        """replace to get a file better than putting all bytes into a BytesIO"""
         return io.BytesIO(self.get_bytes(hash))
 
     def size(self, hash):
+        """=> the number of bytes behind the hash"""
         assert self.is_hash(hash)
         size = self._size(hash)
         if size is None:
@@ -90,60 +109,78 @@ class HashTableBase:
         return size
 
     def _size(self, hash):
+        """replace to get the size better than the length of the bytes"""
         return len(self.get_bytes(hash))
 
     def hashes(self):
+        """=> an iterator over all hashes known to the hashtable
+len(iterator) => the number of hashes
+for hash in iterator: iterate over the hashes.
+Once the len(iterator) is called it is of exactly this size."""
         return HashesIterator(self._hashes)
     
     def _hashes(self):
+        """replace! => all hashes in an iterable"""
         raise NotImplementedError()
 
     def knows(self, hash):
+        """=> whether there is content available for hash.
+This means that HashNotFound is unlikely to be raised when using size or get*"""
         assert self.is_hash(hash)
         return self._knows(hash)
 
     def _knows(self, hash):
+        """replace to test better than inclusion in hashes()"""
         assert self.is_hash(hash)
         return hash in self.hashes()
 
     def remove(self, hash):
+        """remove a hash from the hashtable. No HashNotFound is raised."""
         assert self.is_hash(hash)
-        return self._remove(hash)
+        try: return self._remove(hash)
 
     def _remove(self, hash):
+        """replace! should remove the content of hash"""
         raise NotImplementedError()
 
     def _add_path(self, path):
+        """replace to add a path better than opening and adding a file"""
         hash = hashlib.sha256()
         with open(path, 'rb') as file:
             self.add(file)
 
     def open(self):
-        """Open a file that is written to the hash table when closed."""
+        """=> an open file that is written to the hash table when closed."""
         file = self._open()
-        assert self.is_closable(file)
-        assert self.is_writable(file)
+        assert self.is_closable_file(file)
+        assert self.is_writable_file(file)
         return file
 
     def _open(self):
+        """replace!"""
         raise NotImplementedError()
 
     def _add_hash_table_file(self, file):
+        """add a file that is returned by self.open()"""
         self.add(file)
 
     def _used_memory_bytes(self):
+        """replace to return the approximate bytes of memory used"""
         return 0
     
     def used_memory_bytes(self):
+        """=> the number of bytes used by the content"""
         value = self._used_memory_bytes()
         assert isinstance(value, int)
         assert value >= 0
         return value
 
     def _used_file_bytes(self):
+        """replace to return the approximate bytes of file system storage used"""
         return 0
     
     def used_file_bytes(self):
+        """=> the number of bytes used by the content"""
         value = self._used_file_bytes()
         assert isinstance(value, int)
         assert value >= 0
@@ -158,7 +195,7 @@ once length is determined a number of length hashes is returned"""
         self._length = None
 
     def __len__(self):
-        """len(table.hashes())"""
+        """<=> len(table.hashes())"""
         if self._length is None:
             length = 0
             for x in self:
@@ -167,7 +204,8 @@ once length is determined a number of length hashes is returned"""
         return self._length
 
     def __iter__(self):
-        """for hash in table.hashes()"""
+        """<=> iter(table.hashes())
+used for for hash in table.hashes(): ..."""
         length = 0
         hash = None
         for hash in self._iterator():
@@ -182,9 +220,10 @@ once length is determined a number of length hashes is returned"""
                 yield hash
         return
 
-    def __contains__(self, element):
+    def __contains__(self, hash):
+        """<=> hash in table.hashes()"""
         for contained_element in self:
-            if element == contained_element:
+            if hash == contained_element:
                 return True
         return False
 
