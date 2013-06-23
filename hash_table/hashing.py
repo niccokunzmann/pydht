@@ -9,6 +9,7 @@ def is_hex(string):
     return all([letter in '0123456789abcdef' for letter in string.lower()])
 
 def is_hash(string):
+    """=> whether the object represents a valid hexadecimal hash"""
     assert isinstance(string, str)
     return len(string) == HASHBYTES and is_hex(string)
 

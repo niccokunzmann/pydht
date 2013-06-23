@@ -1,4 +1,3 @@
-
 from . import files
 from . import hashing
 
@@ -20,7 +19,7 @@ class InMemoryMixin:
         return self._content.keys()
 
     def _remove(self, hash):
-        self._content.pop(hash)
+        self._content.pop(hash, None)
 
     def _open(self):
         return files.BytesIO(self)

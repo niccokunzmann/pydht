@@ -1,8 +1,8 @@
-import tempfile
-import os
-
 from . import files
 from . import hashing
+
+import tempfile
+import os
 
 
 class InFileSystemMixin:
@@ -72,7 +72,9 @@ the file must support read()"""
             return None
 
     def _remove(self, hash):
-        os.remove(self._path_for_hash(hash))
+        path = self._path_for_hash(hash)
+        if os.path.isfile(path):
+            os.remove(path)
 
     def _open(self):
         return files.SpooledTemporaryFile(self)

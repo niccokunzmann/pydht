@@ -171,7 +171,16 @@ def test_file_system_is_not_in_memory(fht, string):
     assert fht.used_memory_bytes() == 0
 
 
+def test_remove_hash(ht, string):
+    ht.add(string)
+    ht.remove(hashed(string))
+    assert not ht.knows(hashed(string))
+    assert hashed(string) not in ht.hashes()
+    with raises(HashNotFound):
+        ht.get(hashed(string))
 
+def test_remove_unknown_hash(ht, string):
+    ht.remove(hashed(string))
 
 
 
