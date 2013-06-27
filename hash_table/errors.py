@@ -2,4 +2,7 @@
 class HashNotFound(KeyError):
     pass
 
-__all__ = ['HashNotFound']
+class NoHash(ValueError):
+    pass
+
+__all__ = ['HashNotFound', 'NoHash']
