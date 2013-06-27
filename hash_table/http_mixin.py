@@ -93,3 +93,5 @@ class HTTPMixin:
 
     def get(self, hash):
         return self.get_file(hash)
+
+__all__ = ['HTTPMixin']
