@@ -7,6 +7,7 @@ import base64
 import sys
 import random
 import tempfile
+import pydht.server
 
 @fixture()
 def fht():
@@ -17,6 +18,22 @@ def fht():
 @fixture()
 def mht():
     return InMemory()
+
+@fixture(scope = 'module')
+def dhtserver():
+    print('dhtserver up')
+    server = pydht.server.DHTHTTPServer(pydht.server.DHTRequestHandler,
+                                        ('localhost', 0))
+    def fin():
+        print('dhtserver down')
+        server.close()
+    return server
+
+def hht(dhtserver, mht):
+    dhtserver.hash_table = mht
+    hht = HTTP('http://localhost:{0}/'.format(dhtserver.server_port))
+    hht.server = hht
+    return hht
 
 def pytest_generate_tests(metafunc):
     if 'ht' in metafunc.funcargnames:
