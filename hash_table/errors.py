@@ -10,4 +10,8 @@ class NoHash(ValueError):
 class UnexpectedStatusCode(_HTTPException):
     pass
 
-__all__ = ['HashNotFound', 'NoHash', 'UnexpectedStatusCode']
+class ContentLengthMissing(Exception):
+    pass
+
+__all__ = ['HashNotFound', 'NoHash', 'UnexpectedStatusCode',
+           'ContentLengthMissing']

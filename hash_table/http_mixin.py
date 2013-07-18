@@ -1,6 +1,6 @@
 from . import hashing
 from . import files
-from .errors import UnexpectedStatusCode
+from .errors import *
 
 import urllib.parse
 
@@ -28,6 +28,8 @@ class HTTPMixin:
         self._host = split.hostname
         self._port = split.port
         self._path = split.path
+        if not self._path[-1:] == '/':
+            self._path += '/'
 
     _hashing_file = files.HashingFile
     
@@ -54,10 +56,17 @@ class HTTPMixin:
             msg = 'expected scheme to be http and not {}'.format(self._scheme)
             raise ValueError(msg)
 
+    @staticmethod
+    def path_join(path1, path2):
+        if path2[:1] == '/':
+            return path1 + path2[1:]
+        else:
+            return  path1 + path2
+
     def _open_url(self, method, url, data = None):
         connection = self._connection()
         connection.connect()
-        connection.request(method, url, data)
+        connection.request(method, self.path_join(self._path, url), data)
         return connection.getresponse()
     
     def _get_file(self, hash):
@@ -70,7 +79,7 @@ class HTTPMixin:
             return None
         elif code == 200:
             return response
-        raise UnexpectedStatusCode('Unexpected status code {}'.format(code))
+        raise UnexpectedStatusCode('Unexpected status code {} in get_file'.format(code))
 
     def _add_readable(self, file):
         hashing_file = self._hashing_file(file)
@@ -78,7 +87,7 @@ class HTTPMixin:
         return hashing_file.hash
 
     def _hashes(self):
-        response = self._open_url('GET', '/')
+        response = self._open_url('GET', '')
         for line in response:
             line = line.strip()
             if line:
@@ -88,8 +97,18 @@ class HTTPMixin:
 
     def _size(self, hash):
         response = self._open_url('HEAD', hash)
-        size = response.getheader('Content-Length')
-        return int(size)
+        return self._get_file_from_response(response)
+
+    def _get_file_from_response(self, response):
+        code = response.getcode()
+        if code == 404:
+            return None
+        if code == 200:
+            size = response.getheader('Content-Length')
+            if size is None:
+                raise ContentLengthMissing('Response from {0} has no Content-Length'.format(request.geturl()))
+            return int(size)
+        raise UnexpectedStatusCode('Unexpected status code {} in size'.format(code))
 
     def _remove(self, hash):
         raise NotImplementedError('to be implemented in future')
