@@ -1,8 +1,9 @@
 from . import hashing
 from . import files
+from .errors import UnexpectedStatusCode
 
 import urllib.parse
-from http.client import HTTPException
+
 import http.client
 import socket
 
@@ -22,9 +23,9 @@ class HTTPMixin:
         self._timeout = timeout
 
     def set_base_url(self, url):
-        split = urllib.parse.urlsplit(url)
+        split = urllib.parse.urlparse(url)
         self._scheme = split.scheme
-        self._host = split.host
+        self._host = split.hostname
         self._port = split.port
         self._path = split.path
 
@@ -56,16 +57,20 @@ class HTTPMixin:
     def _open_url(self, method, url, data = None):
         connection = self._connection()
         connection.connect()
-        response = connection.request(method, url, data)
-        return response
+        connection.request(method, url, data)
+        return connection.getresponse()
     
     def _get_file(self, hash):
-        try:
-            return self._open_url('GET', hash, 'rb')
-        except HTTPException as error:
-            if error.code == 404:
-                return None
-            raise
+        response = self._open_url('GET', hash, 'rb')
+        return self._get_file_from_response(response)
+        
+    def _get_file_from_response(self, response):
+        code = response.getcode()
+        if code == 404:
+            return None
+        elif code == 200:
+            return response
+        raise UnexpectedStatusCode('Unexpected status code {}'.format(code))
 
     def _add_readable(self, file):
         hashing_file = self._hashing_file(file)
@@ -73,7 +78,7 @@ class HTTPMixin:
         return hashing_file.hash
 
     def _hashes(self):
-        response = self._open_url('')
+        response = self._open_url('GET', '/')
         for line in response:
             line = line.strip()
             if line:

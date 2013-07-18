@@ -8,29 +8,36 @@ import sys
 import random
 import tempfile
 import pydht.server
+import threading
 
 @fixture()
-def fht():
+def fht(request = None):
     tempdir = tempfile.mkdtemp()
     print(tempdir)
     return InFileSystem(tempdir)
 
 @fixture()
-def mht():
+def mht(request = None):
     return InMemory()
 
 @fixture(scope = 'module')
 def dhtserver():
     print('dhtserver up')
-    server = pydht.server.DHTHTTPServer(pydht.server.DHTRequestHandler,
-                                        ('localhost', 0))
+    server = pydht.server.DHTHTTPServer(('localhost', 0),
+                                        pydht.server.DHTRequestHandler)
+    thread = threading.Thread(target = server.serve_forever)
+    thread.deamon = True
+    thread.start()
     def fin():
         print('dhtserver down')
         server.close()
     return server
 
-def hht(dhtserver, mht):
-    dhtserver.hash_table = mht
+
+@fixture()
+def hht(request):
+    dhtserver = request.getfuncargvalue('dhtserver')
+    dhtserver.hash_table = request.getfuncargvalue('mht')
     hht = HTTP('http://localhost:{0}/'.format(dhtserver.server_port))
     hht.server = hht
     return hht
@@ -39,9 +46,10 @@ def pytest_generate_tests(metafunc):
     if 'ht' in metafunc.funcargnames:
         metafunc.addcall(param=mht)
         metafunc.addcall(param=fht)
+        metafunc.addcall(param=hht)
 
 def pytest_funcarg__ht(request):
-    return request.param()
+    return request.param(request)
     
 @fixture()
 def string():

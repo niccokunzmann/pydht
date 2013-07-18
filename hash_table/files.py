@@ -38,6 +38,8 @@ class SpooledTemporaryFile(HashTableFileMixin, tempfile.SpooledTemporaryFile):
 class HashingFile:
     """One can read from this file and the hash is updated"""
 
+    default_chunk_size = 1024
+
     def __init__(self, file, length = None):
         self._file = file
         self._read = self._file.read
@@ -59,6 +61,12 @@ class HashingFile:
         if self._length is None:
             raise TypeError('length not supported for {}'.format(self._file))
         return self._length
+
+    def __iter__(self):
+        data = self.read(self.default_chunk_size)
+        while data:
+            yield data
+            data = self.read(self.default_chunk_size)
         
 
 __all__ = ['BytesIO', 'SpooledTemporaryFile']
