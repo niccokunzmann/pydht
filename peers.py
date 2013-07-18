@@ -1,5 +1,6 @@
 import multiprocessing
-import DHT_interface
+
+from . import DHT_interface
 
 def add(url):
     peer = DHT_interface.DHTInterface(url, 2)

@@ -3,7 +3,7 @@ import http.server
 import io
 
 from . import peers
-from . import dht
+from .hash_table import default as default_hash_table
 
 # TODO: redirect posts, redirect find
 
@@ -11,10 +11,14 @@ from . import dht
 
 class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
 
+    @property
+    def hash_table(self):
+        return self.server.hash_table
+
     def is_hash(self):
         if self.path[0] != '/': return False
         hash = self.hash
-        return dht.is_hash(hash)
+        return self.hash_table.is_hash(hash)
 
     @property
     def hash(self):
@@ -22,7 +26,7 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def get_hash(self):
         hash = self.hash
-        if not dht.knows(hash):
+        if not self.hash_table.knows(hash):
             redirect = peers.get_redirect(hash)
             if redirect is None:
                 return self.send_error(404, "file not found")
@@ -30,9 +34,9 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header("Location", redirect)
             self.end_headers()
             return 
-        file = dht.get_file(hash)
+        file = self.hash_table.get_file(hash)
         self.send_response(200)
-        self.send_header("Content-Length", str(dht.size(hash)))
+        self.send_header("Content-Length", str(self.hash_table.size(hash)))
         self.end_headers()
         return file
     head_hash = get_hash
@@ -84,16 +88,29 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def post_hash(self):
-        hash = dht.add(self.posted_content)
+        hash = self.hash_table.add(self.posted_content)
         return self.answer_content(hash)
         
     def is_hashes(self):
         return self.path == '/'
 
     def get_hashes(self):
-        # does not have to load everything into memory
-        hashes = '\r\n'.join(dht.hashes())
+        # TODO: do not load everything into memory
+        hashes = '\r\n'.join(self.hash_table.hashes())
         return self.answer_content(hashes)
+
+class DHTHTTPServer(http.server.HTTPServer):
+    
+    _hash_table = None
+    @property
+    def hash_table(self):
+        if self._hash_table is None:
+            return default_hash_table
+        return self._hash_table
+
+    @hash_table.setter
+    def hash_table(self, hash_table):
+        self._hash_table = hash_table
 
 def main():
     import argparse
@@ -104,7 +121,7 @@ def main():
                         help='Specify alternate port [default: 8000]')
     args = parser.parse_args()
     peers.add('http://' + socket.gethostname() + ':' + str(args.port))
-    http.server.test(DHTRequestHandler, port = args.port)
+    http.server.test(DHTRequestHandler, DHTHTTPServer, port = args.port)
 
 
     
