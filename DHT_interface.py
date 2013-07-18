@@ -1,7 +1,8 @@
 import urllib.request
 import socket
-import dht
 import time
+
+from pydht.hash_table import default as dht
 
 class DHTInterface(object):
 

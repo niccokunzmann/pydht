@@ -137,7 +137,7 @@ This means that HashNotFound is unlikely to be raised when using size or get*"""
     def remove(self, hash):
         """remove a hash from the hashtable. No HashNotFound is raised."""
         assert self.is_hash(hash)
-        try: return self._remove(hash)
+        return self._remove(hash)
 
     def _remove(self, hash):
         """replace! should remove the content of hash"""

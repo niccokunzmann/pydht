@@ -2,7 +2,7 @@ from . import hashing
 from . import files
 
 import urllib.parse
-from http.client import HTTPError
+from http.client import HTTPException
 import http.client
 import socket
 
@@ -62,9 +62,10 @@ class HTTPMixin:
     def _get_file(self, hash):
         try:
             return self._open_url('GET', hash, 'rb')
-        except HTTPError as error:
+        except HTTPException as error:
             if error.code == 404:
                 return None
+            raise
 
     def _add_readable(self, file):
         hashing_file = self._hashing_file(file)
