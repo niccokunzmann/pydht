@@ -36,7 +36,7 @@ Currently suported are bytes, readables, paths"""
             return self._add_readable(data)
         if self.is_path(data):
             self._add_path(data)
-        return self._add(data_or_file)
+        return self._add(data)
 
     WRONG_ADD_ARGUMENT = 'Object {object} of type {type} can not be '\
                          'added to a HashTable. '\
@@ -44,7 +44,7 @@ Currently suported are bytes, readables, paths"""
 
     def _add(self, data_or_file):
         """replace to add an other object than mentioned in add"""
-        raise ValueError(self.WRONG_ADD_ARGUMENT.format(
+        raise TypeError(self.WRONG_ADD_ARGUMENT.format(
                             object = data_or_file, type = type(data_or_file)))
 
     def _add_readable(self, file):
