@@ -30,7 +30,7 @@ def dhtserver():
     thread.start()
     def fin():
         print('dhtserver down')
-        server.close()
+        server.shutdown()
     return server
 
 

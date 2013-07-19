@@ -1,5 +1,6 @@
 import io
 import tempfile
+import os
 from . import hashing
 
 class HashTableFileMixin:
@@ -46,7 +47,22 @@ class HashingFile:
         if hasattr(file, 'fileno'):
             self.fileno = file.fileno
         self._algorithm = hashing.algorithm()
-        self._length = length
+        self._length = self.get_length_of_file(file, length)
+
+    def get_length_of_file(self, file, length = None):
+        if length is not None: return length
+        if hasattr(file, '__len__'):
+            return len(file)
+        if hasattr(file, 'fileno'):
+            try: return os.fstat(file.fileno()).st_size
+            except OSError: pass
+        if hasattr(file, 'seek') and hasattr(file, 'tell'):
+            start = file.tell()
+            file.seek(0, 2) # end of stream
+            try: return file.tell() - start
+            finally: file.seek(start)
+        if hasattr(file, 'getvalue'):
+            return len(file.getvalue())
 
     def read(self, *args):
         bytes = self._read(*args)
