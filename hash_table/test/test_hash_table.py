@@ -25,8 +25,7 @@ def dhtserver():
     print('dhtserver up')
     server = pydht.server.DHTHTTPServer(('localhost', 0),
                                         pydht.server.DHTRequestHandler)
-    thread = threading.Thread(target = server.serve_forever)
-    thread.deamon = True
+    thread = threading.Thread(target = server.serve_forever, daemon = True)
     thread.start()
     def fin():
         print('dhtserver down')
@@ -47,8 +46,13 @@ def pytest_generate_tests(metafunc):
         metafunc.addcall(param=mht)
         metafunc.addcall(param=fht)
         metafunc.addcall(param=hht)
+    if 'fmht' in metafunc.funcargnames:
+        metafunc.addcall(param=mht)
+        metafunc.addcall(param=fht)
 
 def pytest_funcarg__ht(request):
+    return request.param(request)
+def pytest_funcarg__fmht(request):
     return request.param(request)
     
 @fixture()
@@ -196,16 +200,16 @@ def test_file_system_is_not_in_memory(fht, string):
     assert fht.used_memory_bytes() == 0
 
 
-def test_remove_hash(ht, string):
-    ht.add(string)
-    ht.remove(hashed(string))
-    assert not ht.knows(hashed(string))
-    assert hashed(string) not in ht.hashes()
+def test_remove_hash(fmht, string):
+    fmht.add(string)
+    fmht.remove(hashed(string))
+    assert not fmht.knows(hashed(string))
+    assert hashed(string) not in fmht.hashes()
     with raises(HashNotFound):
-        ht.get(hashed(string))
+        fmht.get(hashed(string))
 
-def test_remove_unknown_hash(ht, string):
-    ht.remove(hashed(string))
+def test_remove_unknown_hash(fmht, string):
+    fmht.remove(hashed(string))
 
 
 
