@@ -215,7 +215,7 @@ used for for hash in table.hashes(): ..."""
             length += 1
         if self._length is not None:
             if hash is None:
-                hash = hashing.algorithm('').hexdigest()
+                hash = hashing.NULL_HASH
             for x in range(length, self._length):
                 yield hash
         return

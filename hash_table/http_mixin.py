@@ -66,6 +66,7 @@ class HTTPMixin:
     def _open_url(self, method, url, data = None):
         connection = self._connection()
         connection.connect()
+        # TODO: send content length or chunk content
         connection.request(method, self.path_join(self._path, url), data)
         return connection.getresponse()
     
@@ -97,9 +98,9 @@ class HTTPMixin:
 
     def _size(self, hash):
         response = self._open_url('HEAD', hash)
-        return self._get_file_from_response(response)
+        return self._get_size_from_response(response)
 
-    def _get_file_from_response(self, response):
+    def _get_size_from_response(self, response):
         code = response.getcode()
         if code == 404:
             return None

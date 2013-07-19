@@ -53,6 +53,7 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def send_head(self):
         print("path: {}".format(repr(self.path)))
+        print("\thashes: {}".format(list(self.hash_table.hashes())))
         method = self.command.lower() # get, post, head
         for name in self.methods:
             if getattr(self, 'is_' + name, lambda: False)():
@@ -62,11 +63,12 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_POST(self):
         self.posted_content = self.rfile.read(self.posted_length)
+        print('posted content: {}'.format(repr(self.posted_content)))
         return self.do_GET()
 
     @property
     def posted_length(self):
-        return int(self.headers.get('content-length', 0))
+        return int(self.headers.get('Content-Length'))
 
     def answer_content(self, content, encoding = 'ASCII', content_type = None):
         if isinstance(content, str):
