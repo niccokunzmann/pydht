@@ -1,7 +1,0 @@
-============================= test session starts ==============================
-platform win32 -- Python 3.3.1 -- pytest-2.3.5
-collected 5 items
-
-association_table/test/test_association_table.py .....
-
-=========================== 5 passed in 0.14 seconds ===========================
