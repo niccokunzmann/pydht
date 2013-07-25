@@ -1,7 +1,7 @@
 """The default hash table.
 """
 
-import pydht.hash_table as hash_table
+from .. import hash_table
 
 ht = hash_table.InMemory()
 

@@ -1,7 +1,7 @@
 import io
 import tempfile
 import os
-from . import hashing
+from pydht import hashing
 
 class HashTableFileMixin:
     """A mixin for a hashtable that adds itself to the hashtable when closed"""

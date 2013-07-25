@@ -1,6 +1,6 @@
-from . import hashing
+from .. import hashing
 from . import files
-from .errors import *
+from ..errors import *
 
 import urllib.parse
 

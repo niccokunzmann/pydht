@@ -1,8 +1,8 @@
 import io
 import os
 
-from . import hashing
-from .errors import HashNotFound
+from .. import hashing
+from ..errors import HashNotFound
 
 class HashTableBase:
 
@@ -21,11 +21,6 @@ class HashTableBase:
         """=> whether the object can be closed"""
         return hasattr(file, 'close') and callable(file.close)
 
-    @staticmethod
-    def is_path(path):
-        """=> whether the object represents a path on the file system"""
-        return isinstance(path, str) and os.path.isfile(path)
-
     def add(self, data):
         """=> the hash ob the object
 Add an object to the hash table.
@@ -34,8 +29,6 @@ Currently suported are bytes, readables, paths"""
             return self._add_bytes(data)
         if self.is_readable_file(data):
             return self._add_readable(data)
-a        if isinstance(data, tuple):
-            return self._add_association(data)
         return self._add(data)
 
     WRONG_ADD_ARGUMENT = 'Object {object} of type {type} can not be '\
@@ -50,7 +43,7 @@ a        if isinstance(data, tuple):
     def _add_readable(self, file):
         """replace to add a file better than reading everything into memory"""
         return self.add(file.read())
-    
+
     def _add_bytes(self, data):
         """replace to add a bytes better than putting them into a BytesIO"""
         return self._add_readable(io.BytesIO(data))

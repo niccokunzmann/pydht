@@ -1,5 +1,6 @@
 from pytest import *
 from pydht.hash_table import *
+from pydht.errors import HashNotFound
 import hashlib
 import io
 import os
@@ -63,8 +64,6 @@ def hashed(*bytes):
     if len(bytes) == 1:
         return hashlib.sha256(bytes[0]).hexdigest()
     return tuple(map(hashed, bytes))
-
-__all__ = [x for x in dir() if x and x[0] != '_']
 
 def test_add_returns_hash(ht, string):
     assert ht.add(string) == hashed(string)

@@ -2,9 +2,9 @@
 from . import file_mixin
 from . import memory_mixin
 from . import http_mixin
+from . import empty_mixin
 from . import base
-from .errors import HashNotFound
-from .hashing import is_hash, algorithm
+from ..hashing import is_hash, algorithm
 
 
 class InMemory(memory_mixin.InMemoryMixin, base.HashTableBase):
@@ -18,5 +18,8 @@ class HTTP(http_mixin.HTTPMixin, base.HashTableBase):
 
 HTTPS = HTTP
 
-__all__ = ['InMemory', 'InFileSystem', 'HashNotFound', 'is_hash', 'algorithm',
-           'HTTP', 'HTTPS']
+class Empty(empty_mixin.EmptyMixin, base.HashTableBase):
+    pass
+
+__all__ = ['InMemory', 'InFileSystem', 'is_hash', 'algorithm',
+           'HTTP', 'HTTPS', 'Empty']

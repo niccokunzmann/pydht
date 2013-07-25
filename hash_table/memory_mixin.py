@@ -1,5 +1,5 @@
 from . import files
-from . import hashing
+from .. import hashing
 
 class InMemoryMixin:
     
