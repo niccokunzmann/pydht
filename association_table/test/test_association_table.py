@@ -7,6 +7,8 @@ import os
 import base64
 import sys
 import random
+import tempfile
+
 from pytest import *
 
 @fixture()
@@ -15,14 +17,25 @@ def mat(request = None):
     
 @fixture()
 def fat(request = None):
-    import tempfile
     tempdir = tempfile.mkdtemp()
     return InFileSystem(InFileSystemHashTable(tempdir))
+    
+@fixture()
+def fmat(request = None):
+    tempdir = tempfile.mkdtemp()
+    return InFileSystem(InMemoryHashTable(), tempdir)
+    
+@fixture()
+def mfat(request = None):
+    tempdir = tempfile.mkdtemp()
+    return InMemory(InFileSystemHashTable(tempdir))
     
 def pytest_generate_tests(metafunc):
     if 'at' in metafunc.funcargnames:
         metafunc.addcall(param=mat)
         metafunc.addcall(param=fat)
+        metafunc.addcall(param=fmat)
+        metafunc.addcall(param=mfat)
 
 
 def pytest_funcarg__at(request):
