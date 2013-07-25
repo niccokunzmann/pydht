@@ -1,22 +1,24 @@
 
 import pydht.hashing as hashing
+from collections import Iterable
 
 class AssociationTableBase:
 
     def __init__(self, hash_table):
         self.hash_table = hash_table
 
-    is_hash = staticmethod(hashing.is_hash)
+    @staticmethod
+    def is_hash(hash):
+        return isinstance(hash, str) and hashing.is_hash(hash)
 
     @staticmethod
-    def is_association(assocation):
+    def is_association(association):
         """=> whether the association is a tuple of hashes"""
-        return isinstance(association, tuple)
+        return isinstance(association, Iterable)
 
-    @staticmethod
-    def is_association_template(assocation):
+    def is_association_template(self, association):
         """=> whether the association is a tuple of hashes or None"""
-        return isinstance(association, tuple) and \
+        return isinstance(association, Iterable) and \
                all(map(lambda hash: self.is_hash(hash) or hash is None,
                        association))
 
@@ -40,8 +42,8 @@ class AssociationTableBase:
             if not self.is_hash(hash):
                 hash = self.hash_table.add(hash)
             hashes.append(hash)
-        hashes_hash = self.hash_table.add(''.join(hashes).encode('UTF-8'))
-        return hashes, hashes_hash
+        hashes_hash = self.hash_table.add(','.join(hashes).encode('UTF-8'))
+        return tuple(hashes), hashes_hash
 
     def _add_association(self, association):
         hashes, hashes_hash = self._turn_into_hashes(association)
@@ -53,8 +55,8 @@ class AssociationTableBase:
         raise NotImplementedError('to be impemented')
 
     def find(self, association):
-        assert is_association_template(association)
-        return self._find(association)
+        assert self.is_association_template(association)
+        return list(self._find(association))
 
     def _find(self, association):
         assert len(association) >= 1
@@ -67,8 +69,8 @@ class AssociationTableBase:
     def _get_association_hashes_at_index(self, index, hash):
         raise NotImplementedError("to be implemented")
 
-    def _get_association_hashes_at_index_limited_to(self, index, associations):
-        new = _get_association_hashes_at_index(self, index, hash)
+    def _get_association_hashes_at_index_limited_to(self, index, hash, associations):
+        new = self._get_association_hashes_at_index(index, hash)
         return associations & new
             
     

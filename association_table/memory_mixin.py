@@ -10,9 +10,9 @@ class InMemoryMixin:
         associations = self._associations
         if (hash, index) not in associations:
             associations.setdefault((hash, index), set())
-        associations[(hash, index)].add(hashes_hash)
+        associations[(hash, index)].add(tuple(hashes))
 
     def _get_association_hashes_at_index(self, index, hash):
-        return associations[(hash, index)].get(set())
+        return self._associations.get((hash, index), set())
     
 __all__ = ['InMemoryMixin']
