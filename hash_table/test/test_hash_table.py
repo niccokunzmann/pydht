@@ -59,8 +59,12 @@ def pytest_funcarg__fmht(request):
 def string():
     return base64.b64encode(os.urandom(random.randint(3, 7)))
 
-def hashed(bytes):
-    return hashlib.sha256(bytes).hexdigest()
+def hashed(*bytes):
+    if len(bytes) == 1:
+        return hashlib.sha256(bytes[0]).hexdigest()
+    return tuple(map(hashed, bytes))
+
+__all__ = [x for x in dir() if x and x[0] != '_']
 
 def test_add_returns_hash(ht, string):
     assert ht.add(string) == hashed(string)
