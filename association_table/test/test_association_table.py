@@ -41,18 +41,18 @@ def test_3_hashes_returned_by_association(at, s1, s2, s3):
 
 def test_find_association(at, s1, s2):
     at.add((s1, s2))
-    assert at.find(hashed(s1, s2)) == [hashed(s1, s2)]
+    assert at.find(hashed(s1, s2)) == set([hashed(s1, s2)])
 
-##def test_find_all_associations_first_argument(at, s1, s2, s3):
-##    at.add((s1, s2))
-##    at.add((s1, s3))
-##    assert at.find((hashed(s1), None)) == [hashed(s1, s2), hashed(s1, s3)]
-##
-##def test_find_all_associations_second_argument(at, s1, s2, s3):
-##    at.add((s1, s2))
-##    at.add((s3, s2))
-##    assert at.find((None, hashed(s2))) == [hashed(s1, s2), hashed(s3, s2)]
-##
+def test_find_all_associations_first_argument(at, s1, s2, s3):
+    at.add((s1, s2))
+    at.add((s1, s3))
+    assert at.find((hashed(s1), None)) == set([hashed(s1, s2), hashed(s1, s3)])
+
+def test_find_all_associations_second_argument(at, s1, s2, s3):
+    at.add((s1, s2))
+    at.add((s3, s2))
+    assert at.find((None, hashed(s2))) == set([hashed(s1, s2), hashed(s3, s2)])
+
 ##def test_do_not_find_not_listed_associations(at, s1, s2, s3):
 ##    at.add((s3, s2)) # not listed
 ##    at.add((s1, s2))

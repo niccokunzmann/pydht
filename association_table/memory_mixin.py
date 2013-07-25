@@ -1,4 +1,4 @@
-
+import pprint
 
 class InMemoryMixin:
 
@@ -13,6 +13,7 @@ class InMemoryMixin:
         associations[(hash, index)].add(tuple(hashes))
 
     def _get_association_hashes_at_index(self, index, hash):
+        pprint.pprint(self._associations)
         return self._associations.get((hash, index), set())
     
 __all__ = ['InMemoryMixin']

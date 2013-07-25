@@ -56,14 +56,19 @@ class AssociationTableBase:
 
     def find(self, association):
         assert self.is_association_template(association)
-        return list(self._find(association))
+        return self._find(association)
 
     def _find(self, association):
         assert len(association) >= 1
-        associations = self._get_association_hashes_at_index(0, association[0])
         for index, hash in enumerate(association):
             if hash is None: continue
+            associations = self._get_association_hashes_at_index(index, hash)
+            break
+        print('assoc:', index, associations)
+        for index, hash in enumerate(association[index + 1:], 1):
+            if hash is None: continue
             associations = self._get_association_hashes_at_index_limited_to(index, hash, associations)
+            print('assoc:', index, associations)
         return associations
 
     def _get_association_hashes_at_index(self, index, hash):
