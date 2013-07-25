@@ -13,7 +13,6 @@ class InMemory(memory_mixin.InMemoryMixin, base.HashTableBase):
 class InFileSystem(file_mixin.InFileSystemMixin, base.HashTableBase):
     pass
 
-
 class HTTP(http_mixin.HTTPMixin, base.HashTableBase):
     pass
 

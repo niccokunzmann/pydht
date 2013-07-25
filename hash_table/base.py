@@ -34,8 +34,8 @@ Currently suported are bytes, readables, paths"""
             return self._add_bytes(data)
         if self.is_readable_file(data):
             return self._add_readable(data)
-        if self.is_path(data):
-            self._add_path(data)
+a        if isinstance(data, tuple):
+            return self._add_association(data)
         return self._add(data)
 
     WRONG_ADD_ARGUMENT = 'Object {object} of type {type} can not be '\
@@ -85,7 +85,7 @@ May raise HasNotFound."""
         return file
 
     def get(self, hash):
-        """replac!"""
+        """replace!"""
         raise NotImplementedError('This should be implemented like get_file'\
                                   ' or get_bytes depending on what is less '\
                                   'effort.')
@@ -142,12 +142,6 @@ This means that HashNotFound is unlikely to be raised when using size or get*"""
     def _remove(self, hash):
         """replace! should remove the content of hash"""
         raise NotImplementedError()
-
-    def _add_path(self, path):
-        """replace to add a path better than opening and adding a file"""
-        hash = hashlib.sha256()
-        with open(path, 'rb') as file:
-            self.add(file)
 
     def open(self):
         """=> an open file that is written to the hash table when closed."""
