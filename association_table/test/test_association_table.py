@@ -53,23 +53,25 @@ def test_find_all_associations_second_argument(at, s1, s2, s3):
     at.add((s3, s2))
     assert at.find((None, hashed(s2))) == set([hashed(s1, s2), hashed(s3, s2)])
 
-##def test_do_not_find_not_listed_associations(at, s1, s2, s3):
-##    at.add((s3, s2)) # not listed
-##    at.add((s1, s2))
-##    assert at.find(hashed(s1, s2)) == [hashed(s1, s2)]
-##
-##def test_do_not_find_anything(at, s1, s2):
-##    at.add(s1)
-##    at.add(s2)
-##    assert at.find((s1, None)) == []
-##    assert at.find((s2, None)) == []
-##
-##def test_do_not_find_longer_associations(at, s1, s2, s3):
-##    at.add((s1, s2, s3))
-##    assert at.find((hashed(s1), None)) == [hashed(s1, s2, s3)]
-##
-##def test_find_long_association(at, s1, s2, s3, s4, s5):
-##    at.add((s1, s2, s3, s4, s5))
-##    assert at.find(hashed(s1, s2, s3, s4, s5)) == [hashed(s1, s2, s3, s4, s5)]
-##    assert at.find(hashed(s1, s2, None, s4, s5)) == [hashed(s1, s2, s3, s4, s5)]
-##
+def test_do_not_find_not_listed_associations(at, s1, s2, s3):
+    at.add((s3, s2)) # not listed
+    at.add((s1, s2))
+    assert at.find(hashed(s1, s2)) == set([hashed(s1, s2)])
+
+def test_do_not_find_anything(at, s1, s2):
+    at.hash_table.add(s1)
+    at.hash_table.add(s2)
+    assert at.find((hashed(s1), None)) == set()
+    assert at.find((hashed(s2), None)) == set()
+
+def test_do_not_find_longer_associations(at, s1, s2, s3):
+    at.add((s1, s2, s3))
+    assert at.find((hashed(s1), None)) == set([hashed(s1, s2, s3)])
+
+def test_find_long_association(at, s1, s2, s3, s4, s5):
+    at.add((s1, s2, s3, s4, s5))
+    hashed12345 = list(hashed(s1, s2, s3, s4, s5))
+    assert at.find(hashed12345) == set([hashed(s1, s2, s3, s4, s5)])
+    hashed12345[2] = None
+    assert at.find(hashed12345) == set([hashed(s1, s2, s3, s4, s5)])
+
