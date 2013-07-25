@@ -65,11 +65,9 @@ class AssociationTableBase:
             if hash is None: continue
             associations = self._get_association_hashes_at_index(index, hash)
             break
-        print('assoc:', index, associations)
         for index, hash in enumerate(association[index + 1:], 1):
             if hash is None: continue
             associations = self._get_association_hashes_at_index_limited_to(index, hash, associations)
-            print('assoc:', index, associations)
         tuple_associations = set()
         for association in associations:
             if not isinstance(association, tuple):
