@@ -7,18 +7,22 @@ import os
 
 class InFileSystemMixin:
 
+    CONTENT = 'content'
+
     def __init__(self, directory):
         super().__init__()
         self._directory = directory
+        self._hash_directory = hashing.HashDirectory(self._directory)
 
-    def _path_for_hash(self, hash):
-        directory = os.path.join(self._directory, hash[:2])
-        if not os.path.isdir(directory):
-            os.makedirs(directory)
-        return os.path.join(directory, hash[2:])
+    def get_base_directory(self):
+        return self._directory
+
+    def _content_path_for_hash(self, hash):
+        directory = self._hash_directory.make_directory(hash)
+        return os.path.join(directory, self.CONTENT)
 
     def _open_hash_file(self, hash, mode):
-        path = self._path_for_hash(hash)
+        path = self._content_path_for_hash(hash)
         return open(path, mode)
         
     def _get_file(self, hash):
@@ -31,7 +35,7 @@ class InFileSystemMixin:
         tempname = tempfile.mktemp()
         with open(tempname, 'wb') as to_file:
             hash = self.get_hash_from_file(file, to_file.write)
-        path = self._path_for_hash(hash)
+        path = self._content_path_for_hash(hash)
         try: os.rename(tempname, path)
         except FileExistsError: os.remove(tempname)
         return hash
@@ -40,7 +44,7 @@ class InFileSystemMixin:
         if file.name is None:
             return self._add_readable(file)
         hash = get_hash_from_file(file)
-        try: os.rename(to_file.name, self._path_for_hash(hash))
+        try: os.rename(to_file.name, self._content_path_for_hash(hash))
         except FileExistsError: os.remove(to_file.name)
 
     def get_hash_from_file(self, file, write = None):
@@ -58,21 +62,20 @@ the file must support read()"""
         return hash.hexdigest()
 
     def _hashes(self):
-        dirs = os.listdir(self._directory)
-        for dir in dirs:
-            files = os.listdir(os.path.join(self._directory, dir))
-            for file in files:
-                yield dir + file
-        return
+        exists = lambda path: os.path.exists(os.path.join(path, self.CONTENT))
+        return self._hash_directory.list(exists)
+
+    def _knows(self, hash):
+        return os.path.exists(self._content_path_for_hash(hash))
 
     def _size(self, hash):
         try:
-            return os.path.getsize(self._path_for_hash(hash))
+            return os.path.getsize(self._content_path_for_hash(hash))
         except FileNotFoundError:
             return None
 
     def _remove(self, hash):
-        path = self._path_for_hash(hash)
+        path = self._content_path_for_hash(hash)
         if os.path.isfile(path):
             os.remove(path)
 
@@ -85,8 +88,8 @@ the file must support read()"""
     def _used_file_bytes(self):
         size = 0
         for hash in self.hashes():
-            try: size += os.path.getsize(self._path_for_hash(hash))
-            except (): pass # File not found
+            try: size += os.path.getsize(self._content_path_for_hash(hash))
+            except FileNotFoundError: pass # race condition with remove
         return size
     
 __all__ = ['InFileSystemMixin']

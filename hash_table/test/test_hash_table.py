@@ -7,14 +7,13 @@ import os
 import base64
 import sys
 import random
-import tempfile
 import pydht.server
 import threading
 
 @fixture()
 def fht(request = None):
+    import tempfile
     tempdir = tempfile.mkdtemp()
-    print(tempdir)
     return InFileSystem(tempdir)
 
 @fixture()

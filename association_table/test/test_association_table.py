@@ -1,4 +1,5 @@
 from pydht.hash_table import InMemory as InMemoryHashTable
+from pydht.hash_table import InFileSystem as InFileSystemHashTable
 from pydht.association_table import *
 
 import hashlib
@@ -12,10 +13,16 @@ from pytest import *
 def mat(request = None):
     return InMemory(InMemoryHashTable())
     
+@fixture()
+def fat(request = None):
+    import tempfile
+    tempdir = tempfile.mkdtemp()
+    return InFileSystem(InFileSystemHashTable(tempdir))
+    
 def pytest_generate_tests(metafunc):
     if 'at' in metafunc.funcargnames:
         metafunc.addcall(param=mat)
-##        metafunc.addcall(param=fat)
+        metafunc.addcall(param=fat)
 
 
 def pytest_funcarg__at(request):

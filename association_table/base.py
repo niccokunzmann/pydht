@@ -4,7 +4,8 @@ from collections import Iterable
 
 class AssociationTableBase:
 
-    def __init__(self, hash_table):
+    def __init__(self, hash_table, *args, **kw):
+        super().__init__(*args, **kw)
         self.hash_table = hash_table
 
     @staticmethod
@@ -69,7 +70,12 @@ class AssociationTableBase:
             if hash is None: continue
             associations = self._get_association_hashes_at_index_limited_to(index, hash, associations)
             print('assoc:', index, associations)
-        return associations
+        tuple_associations = set()
+        for association in associations:
+            if not isinstance(association, tuple):
+                association = tuple(self.hash_table.get_bytes(association).decode('utf8').split(','))
+            tuple_associations.add(association)    
+        return tuple_associations
 
     def _get_association_hashes_at_index(self, index, hash):
         raise NotImplementedError("to be implemented")

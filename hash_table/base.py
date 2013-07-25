@@ -21,6 +21,9 @@ class HashTableBase:
         """=> whether the object can be closed"""
         return hasattr(file, 'close') and callable(file.close)
 
+    def get_base_directory(self):
+        return None
+
     def add(self, data):
         """=> the hash ob the object
 Add an object to the hash table.
