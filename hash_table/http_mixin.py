@@ -12,6 +12,10 @@ class HTTPMixin:
         self._requester = self.Requester.make(requester)
         self._open_url = self._requester.open_url
 
+    def to_requester(self):
+        """=> this object's requester"""
+        return self._requester
+
     _hashing_file = files.HashingFile
     
     def _add_readable(self, file):

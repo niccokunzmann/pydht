@@ -24,14 +24,13 @@ class Requester:
 
     @classmethod
     def make(cls, url_or_requester):
-        if hasattr(url_or_requester, 'is_requester') and \
-           url_or_requester.is_requester():
-            return url_or_requester
+        if hasattr(url_or_requester, 'to_requester')
+            return url_or_requester.to_requester()
         return cls(url_or_requester)
 
     @staticmethod
-    def is_requester(self):
-        return True
+    def to_requester(self):
+        return self
     
     def __init__(self, base_url = None,
                  timeout = socket._GLOBAL_DEFAULT_TIMEOUT,
