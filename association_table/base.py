@@ -1,6 +1,7 @@
 
 import pydht.hashing as hashing
 from collections import Iterable
+from .association import Association
 
 class AssociationTableBase:
 
@@ -14,7 +15,7 @@ class AssociationTableBase:
 
     @staticmethod
     def is_association(association):
-        """=> whether the association is a tuple of hashes"""
+        """=> whether the association is a Association of hashes"""
         return isinstance(association, Iterable)
 
     def is_association_template(self, association):
@@ -25,7 +26,7 @@ class AssociationTableBase:
 
     def add(self, data):
         if self.is_association(data):
-            return self._add_association(data)
+            return self._add_association(self._convert_to_association(data))
         return self._add(data)
 
     WRONG_ADD_ARGUMENT = 'Object {object} of type {type} can not be '\
@@ -43,8 +44,9 @@ class AssociationTableBase:
             if not self.is_hash(hash):
                 hash = self.hash_table.add(hash)
             hashes.append(hash)
-        hashes_hash = self.hash_table.add(','.join(hashes).encode('UTF-8'))
-        return tuple(hashes), hashes_hash
+        association = Association.from_hashes(hashes)
+        hashes_hash = self.hash_table.add(association.to_bytes())
+        return association, hashes_hash
 
     def _add_association(self, association):
         hashes, hashes_hash = self._turn_into_hashes(association)
@@ -68,12 +70,21 @@ class AssociationTableBase:
         for index, hash in enumerate(association[index + 1:], 1):
             if hash is None: continue
             associations = self._get_association_hashes_at_index_limited_to(index, hash, associations)
-        tuple_associations = set()
+        _associations = set()
         for association in associations:
-            if not isinstance(association, tuple):
-                association = tuple(self.hash_table.get_bytes(association).decode('utf8').split(','))
-            tuple_associations.add(association)    
-        return tuple_associations
+            _associations.add(self._convert_to_association(association))
+        return _associations
+
+    def _convert_to_association(self, association):
+        if self.is_hash(association):
+            bytes = self.hash_table.get_bytes(association)
+            association = Association.from_bytes(bytes)
+        elif isinstance(association, tuple):
+            return Association.from_hashes(association)
+        if isinstance(association, Association):
+            return association
+        else:
+            raise TypeError('Expected Association but got type {}: {}'.format(type(association), repr(association)))
 
     def _get_association_hashes_at_index(self, index, hash):
         raise NotImplementedError("to be implemented")
