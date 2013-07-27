@@ -21,5 +21,16 @@ HTTPS = HTTP
 class Empty(empty_mixin.EmptyMixin, base.HashTableBase):
     pass
 
+
+_default = None
+
+def default():
+    """=> the default hash table"""
+    global _default
+    if not _default:
+        _default = InMemory()
+    return _default
+    
+
 __all__ = ['InMemory', 'InFileSystem', 'is_hash', 'algorithm',
-           'HTTP', 'HTTPS', 'Empty']
+           'HTTP', 'HTTPS', 'Empty', 'default']

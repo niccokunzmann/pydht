@@ -38,7 +38,6 @@ def hht(request):
     dhtserver = request.getfuncargvalue('dhtserver')
     dhtserver.hash_table = request.getfuncargvalue('mht')
     hht = HTTP('http://localhost:{0}/'.format(dhtserver.server_port))
-    hht.server = hht
     return hht
 
 def pytest_generate_tests(metafunc):
