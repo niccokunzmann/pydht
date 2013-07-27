@@ -20,6 +20,10 @@ class HTTPMixin:
         return self._requester
 
     def _find(self, association):
+        pass
+        
+    def _add_association(self, association):
+        hashes, hashes_hash = self._turn_into_hashes(association)
         
 
     
