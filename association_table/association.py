@@ -3,7 +3,8 @@ class Association(tuple):
     ASSOCIATION_SEPERATOR = '/'
 
     def to_string(self):
-        return self.ASSOCIATION_SEPERATOR.join((self.ANY_HASH if x is None else x) for x in template)
+        return self.ASSOCIATION_SEPERATOR.join(
+            (self.ANY_HASH if x is None else x) for x in self)
 
     to_url = to_string
 

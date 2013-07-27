@@ -1,9 +1,10 @@
 
 import pydht.hashing as hashing
 from collections import Iterable
-from .association import Association
 
 class AssociationTableBase:
+
+    from .association import Association
 
     def __init__(self, hash_table, *args, **kw):
         super().__init__(*args, **kw)
@@ -27,7 +28,7 @@ class AssociationTableBase:
     def _convert_to_association(self, object):
         if self.is_hash(object):
             bytes = self.hash_table.get_bytes(object)
-            association = Association.from_bytes(bytes)
+            association = self.Association.from_bytes(bytes)
         elif isinstance(object, tuple):
             hashes = []
             for hash in object:
@@ -35,8 +36,8 @@ class AssociationTableBase:
                 if not self.is_hash(hash):
                     hash = self.hash_table.add(hash)
                 hashes.append(hash)
-            association = Association.from_hashes(hashes)
-        if isinstance(association, Association):
+            association = self.Association.from_hashes(hashes)
+        if isinstance(association, self.Association):
             return association
         else:
             raise TypeError('Expected Association but got type {}: {}'.format(type(association), repr(association)))
