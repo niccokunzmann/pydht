@@ -26,6 +26,8 @@ class Requester:
     def make(cls, url_or_requester):
         if hasattr(url_or_requester, 'to_requester')
             return url_or_requester.to_requester()
+        if not isinstance(url_or_requester, str):
+            raise TypeError('wrong url type for requester. expected str but got {}'.format(url_or_requester))
         return cls(url_or_requester)
 
     @staticmethod
