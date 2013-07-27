@@ -91,3 +91,5 @@ class Requester:
         return connection.getresponse()
             
 Requester.set_response_class(Response)
+
+__all__ = ['Requester']
