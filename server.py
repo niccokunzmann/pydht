@@ -3,7 +3,10 @@ import http.server
 import io
 
 from . import peers
-from .hash_table import default as default_hash_table
+from . import association_table
+from . import hash_table
+from .association_table.association import Association
+from . import hashing
 
 # TODO: redirect posts, redirect find
 
@@ -14,6 +17,10 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
     @property
     def hash_table(self):
         return self.server.hash_table
+
+    @property
+    def association_table(self):
+        return self.server.association_table
 
     def is_hash(self):
         if self.path[0] != '/': return False
@@ -49,16 +56,17 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
         return self.answer_content(content)
     head_peers = get_peers
 
-    methods = ['peers', 'hash', 'hashes']
+    methods = ['peers', 'hash', 'hashes', 'association_request', 'new_associations']
 
     def send_head(self):
         print("path: {}".format(repr(self.path)))
         print("\thashes: {}".format(list(self.hash_table.hashes())))
         method = self.command.lower() # get, post, head
+        no_method = lambda: self.send_error(404, "unsupported method {}".format(repr(method_name)))
         for name in self.methods:
             if getattr(self, 'is_' + name, lambda: False)():
-                return getattr(self, method + '_' + name,
-                               lambda: self.send_error(404, "unsupported method"))()
+                method_name = method + '_' + name
+                return getattr(self, method_name, no_method)()
         return self.send_error(404, "unsupported path")
 
     def do_POST(self):
@@ -101,18 +109,33 @@ class DHTRequestHandler(http.server.SimpleHTTPRequestHandler):
         hashes = '\r\n'.join(self.hash_table.hashes())
         return self.answer_content(hashes)
 
+    def is_new_associations(self):
+        return self.path == '/associations'
+
+    def post_new_associations(self):
+        for line in self.posted_content.splitlines():
+            association = Association.from_line(line)
+            self.association_table.add(association)
+        self.send_response(200)
+        self.end_headers()
+        return None
+
+    @property
+    def association(self):
+        return Association.from_string(self.path[1:])
+
+    def is_association_request(self):
+        return len(self.association) > 1
+
+    def get_association_request(self):
+        associations = self.association_table.find(self.association)
+        return self.answer_content(b'\n'.join(association.to_bytes() for association in associations))
+        
+
 class DHTHTTPServer(http.server.HTTPServer):
     
-    _hash_table = None
-    @property
-    def hash_table(self):
-        if self._hash_table is None:
-            return default_hash_table
-        return self._hash_table
-
-    @hash_table.setter
-    def hash_table(self, hash_table):
-        self._hash_table = hash_table
+    hash_table = hash_table.default()
+    association_table = association_table.default()
 
 def main():
     import argparse

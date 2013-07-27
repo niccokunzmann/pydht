@@ -1,6 +1,8 @@
 from pydht.hash_table import InMemory as InMemoryHashTable
 from pydht.hash_table import InFileSystem as InFileSystemHashTable
+from pydht.hash_table import HTTP as HTTPHashTable
 from pydht.association_table import *
+import pydht.server
 
 import hashlib
 import os
@@ -8,6 +10,7 @@ import base64
 import sys
 import random
 import tempfile
+import threading
 
 from pytest import *
 
@@ -30,13 +33,40 @@ def mfat(request = None):
     tempdir = tempfile.mkdtemp()
     return InMemory(InFileSystemHashTable(tempdir))
     
+@fixture()
+def mfat(request = None):
+    tempdir = tempfile.mkdtemp()
+    return InMemory(InFileSystemHashTable(tempdir))
+
+@fixture(scope = 'module')
+def dhtserver():
+    print('dhtserver up')
+    server = pydht.server.DHTHTTPServer(('localhost', 0),
+                                        pydht.server.DHTRequestHandler)
+    thread = threading.Thread(target = server.serve_forever, daemon = True)
+    thread.start()
+    def fin():
+        print('dhtserver down')
+        server.shutdown()
+    return server
+
+
+@fixture()
+def hat(request):
+    dhtserver = request.getfuncargvalue('dhtserver')
+    mat = request.getfuncargvalue('mat')
+    dhtserver.hash_table = mat.hash_table
+    dhtserver.associaion_table = mat
+    hat = HTTP(HTTPHashTable('http://localhost:{0}/'.format(dhtserver.server_port)))
+    return hat
+    
 def pytest_generate_tests(metafunc):
     if 'at' in metafunc.funcargnames:
         metafunc.addcall(param=mat)
         metafunc.addcall(param=fat)
         metafunc.addcall(param=fmat)
         metafunc.addcall(param=mfat)
-
+        metafunc.addcall(param=hat)
 
 def pytest_funcarg__at(request):
     return request.param(request)

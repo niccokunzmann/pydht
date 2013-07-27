@@ -37,6 +37,7 @@ class Response(http.client.HTTPResponse):
 
     def get_associations(self, association_class):
         file = self.get_file()
+        if not file: return
         associations = set()
         for line in file:
             associations.add(association_class.from_line(line))

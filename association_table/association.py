@@ -1,6 +1,7 @@
 
 class Association(tuple):
     ASSOCIATION_SEPERATOR = '/'
+    ANY_HASH = '*'
 
     def to_string(self):
         return self.ASSOCIATION_SEPERATOR.join(
@@ -13,7 +14,7 @@ class Association(tuple):
 
     @classmethod
     def from_string(cls, string):
-        return cls(string.split(cls.ASSOCIATION_SEPERATOR))
+        return cls.from_hashes(string.split(cls.ASSOCIATION_SEPERATOR))
 
     @classmethod
     def from_bytes(cls, bytes):
@@ -25,7 +26,7 @@ class Association(tuple):
 
     @classmethod
     def from_hashes(cls, tuple):
-        return cls(tuple)
+        return cls((None if e == cls.ANY_HASH else e) for e in tuple)
 
 
 __all__ = ['Association']

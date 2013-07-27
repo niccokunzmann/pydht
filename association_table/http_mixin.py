@@ -22,11 +22,12 @@ class HTTPMixin:
     def _find(self, association):
         association = self._convert_to_association(association)
         response = self._open_url('GET', association.to_url())
-        return response.get_associations(self.Associations)
+        return response.get_associations(self.Association)
         
     def _add_association(self, association):
         association = self._convert_to_association(association)
         response = self._open_url('POST', 'associations', association.to_bytes())
+        return association
         
 
     

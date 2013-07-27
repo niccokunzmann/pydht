@@ -13,5 +13,15 @@ class InFileSystem(file_mixin.InFileSystemMixin, base.AssociationTableBase):
 class HTTP(http_mixin.HTTPMixin, base.AssociationTableBase):
     pass
 
+_default = None
 
-__all__ = ['InMemory', 'InFileSystem', 'HTTP']
+def default():
+    """=> the default association table"""
+    global _default
+    if not _default:
+        from .. import hash_table
+        _default = InMemory(hash_table.default())
+    return _default
+    
+
+__all__ = ['InMemory', 'InFileSystem', 'HTTP', 'default']
