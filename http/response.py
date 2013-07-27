@@ -1,15 +1,23 @@
 from ..errors import *
 
 import http.client
+from ..association_table.association import Association
 
 class Response(http.client.HTTPResponse):
 
-    def get_file(self):
-        code = self.getcode()
-        attribute = '_get_file_{}'.format(code)
-        if hasattr(self, attribute):
-            return getattr(self, attribute)()
-        raise UnexpectedStatusCode('Unexpected status code {} in get_file'.format(code))
+    @staticmethod
+    def _method_for_status_code(name, doc):
+        def get_(self, *args, **kw):
+            code = self.getcode()
+            attribute = '_get_{}_{}'.format(name, code)
+            if hasattr(self, attribute):
+                return getattr(self, attribute)(*args, **kw)
+            raise UnexpectedStatusCode('Unexpected status code {} in get_{}'.format(code, name))
+        get_.__name__ += name
+        get_.__doc__ = doc
+        return get_
+
+    get_file = _method_for_status_code('file', '=> the file object with the content')
 
     def _get_file_404(self):
         return None
@@ -17,13 +25,8 @@ class Response(http.client.HTTPResponse):
     def _get_file_200(self):
         return self
 
-    def get_size(self):
-        code = self.getcode()
-        attribute = '_get_size_{}'.format(code)
-        if hasattr(self, attribute):
-            return getattr(self, attribute)()
-        raise UnexpectedStatusCode('Unexpected status code {} in size'.format(code))
-    
+    get_file = _method_for_status_code('size', '=> size of the request body')
+
     def _get_size_404(self):
         return None
 
@@ -33,3 +36,9 @@ class Response(http.client.HTTPResponse):
             raise ContentLengthMissing('Response from {0} has no Content-Length'.format(request.geturl()))
         return int(size)
 
+    def get_associations(self):
+        file = self.get_file()
+        associations = set()
+        for line in file:
+            associations.add(Association.from_line(line))
+        return associations

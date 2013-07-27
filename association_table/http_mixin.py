@@ -20,11 +20,13 @@ class HTTPMixin:
         return self._requester
 
     def _find(self, association):
-        pass
+        association = self._convert_to_association(association)
+        response = self._open_url('GET', association.to_url())
+        return response.get_associations()
         
     def _add_association(self, association):
-        hashes, hashes_hash = self._turn_into_hashes(association)
-        
+        association = self._convert_to_association(association)
+        self._open_url('POST', 'associations', association.to_bytes())
 
     
 __all__ = ['HTTPMixin']

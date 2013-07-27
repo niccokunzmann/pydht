@@ -24,6 +24,23 @@ class AssociationTableBase:
                all(map(lambda hash: self.is_hash(hash) or hash is None,
                        association))
 
+    def _convert_to_association(self, object):
+        if self.is_hash(object):
+            bytes = self.hash_table.get_bytes(object)
+            association = Association.from_bytes(bytes)
+        elif isinstance(object, tuple):
+            hashes = []
+            for hash in object:
+                if hash is None: continue
+                if not self.is_hash(hash):
+                    hash = self.hash_table.add(hash)
+                hashes.append(hash)
+            association = Association.from_hashes(hashes)
+        if isinstance(association, Association):
+            return association
+        else:
+            raise TypeError('Expected Association but got type {}: {}'.format(type(association), repr(association)))
+
     def add(self, data):
         if self.is_association(data):
             return self._add_association(self._convert_to_association(data))
@@ -38,18 +55,8 @@ class AssociationTableBase:
         raise TypeError(self.WRONG_ADD_ARGUMENT.format(
                             object = data_or_file, type = type(data_or_file)))
 
-    def _turn_into_hashes(self, association):
-        hashes = []
-        for hash in association:
-            if not self.is_hash(hash):
-                hash = self.hash_table.add(hash)
-            hashes.append(hash)
-        association = Association.from_hashes(hashes)
-        hashes_hash = self.hash_table.add(association.to_bytes())
-        return association, hashes_hash
-
-    def _add_association(self, association):
-        hashes, hashes_hash = self._turn_into_hashes(association)
+    def _add_association(self, hashes):
+        hashes_hash = self.hash_table.add(hashes.to_bytes())
         for index, hash in enumerate(hashes):
             self._add_association_at_index(index, hash, hashes_hash, hashes)
         return hashes
@@ -59,10 +66,11 @@ class AssociationTableBase:
 
     def find(self, association):
         assert self.is_association_template(association)
+        assert len(association) >= 1
         return self._find(association)
 
     def _find(self, association):
-        assert len(association) >= 1
+        association = self._convert_to_association(association)
         for index, hash in enumerate(association):
             if hash is None: continue
             associations = self._get_association_hashes_at_index(index, hash)
@@ -74,17 +82,6 @@ class AssociationTableBase:
         for association in associations:
             _associations.add(self._convert_to_association(association))
         return _associations
-
-    def _convert_to_association(self, association):
-        if self.is_hash(association):
-            bytes = self.hash_table.get_bytes(association)
-            association = Association.from_bytes(bytes)
-        elif isinstance(association, tuple):
-            return Association.from_hashes(association)
-        if isinstance(association, Association):
-            return association
-        else:
-            raise TypeError('Expected Association but got type {}: {}'.format(type(association), repr(association)))
 
     def _get_association_hashes_at_index(self, index, hash):
         raise NotImplementedError("to be implemented")
