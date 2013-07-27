@@ -29,18 +29,18 @@ class AssociationTableBase:
         if self.is_hash(object):
             bytes = self.hash_table.get_bytes(object)
             association = self.Association.from_bytes(bytes)
-        elif isinstance(object, tuple):
+        elif isinstance(object, tuple) or isinstance(object, list):
             hashes = []
             for hash in object:
-                if hash is None: continue
-                if not self.is_hash(hash):
+                if hash is not None and not self.is_hash(hash):
                     hash = self.hash_table.add(hash)
                 hashes.append(hash)
             association = self.Association.from_hashes(hashes)
+        else: association = object        
         if isinstance(association, self.Association):
             return association
         else:
-            raise TypeError('Expected Association but got type {}: {}'.format(type(association), repr(association)))
+            raise TypeError('Expected Association, tuple, list or string hash but got type {}: {}'.format(type(association), repr(association)))
 
     def add(self, data):
         if self.is_association(data):
