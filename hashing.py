@@ -2,6 +2,7 @@ from .errors import NoHash
 
 import hashlib
 import os
+import urllib.request
 
 algorithm = hashlib.sha256
 
@@ -49,6 +50,16 @@ class HashDirectory:
             for dir2 in os.listdir(full_dir):
                 if select and select(os.path.join(full_dir, dir2)):
                     yield dir + dir2
+
+def hash_for_url(url, chunksize = 4096):
+    file = urllib.request.urlopen(url)
+    hash = algorithm()
+    while 1:
+        chunk = file.read(chunksize)
+        if not chunk:
+            break
+        hash.update(chunk)
+    return hash.hexdigest()
     
 
 __all__ = ['algorithm', 'is_hash', 'is_hex', 'HASHBYTES', 'HASHBITS',
