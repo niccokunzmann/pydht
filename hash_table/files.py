@@ -85,4 +85,4 @@ class HashingFile:
             data = self.read(self.default_chunk_size)
         
 
-__all__ = ['BytesIO', 'SpooledTemporaryFile']
+__all__ = ['BytesIO', 'SpooledTemporaryFile', 'HashingFile']

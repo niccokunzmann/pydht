@@ -1,6 +1,7 @@
 import socket
 import http.server
 import io
+import threading
 
 from . import peers
 from . import association_table
@@ -136,6 +137,37 @@ class DHTHTTPServer(http.server.HTTPServer):
     
     hash_table = hash_table.default()
     association_table = association_table.default()
+
+    @classmethod
+    def serve_hash_table(cls, hash_table, address,
+                         RequestHandler = DHTRequestHandler):
+        server = cls(address, RequestHandler)
+        server.hash_table = hash_table
+        thread = threading.Thread(target = server.serve_forever, daemon = True)
+        thread.start()
+        return server
+        
+    @property
+    def url(self):
+        return 'http://{}:{}/'.format(self.host, self.port)
+
+    @property
+    def host(self):
+        host = self.socket.getsockname()[0]
+        try:
+            localhost = socket.gethostbyname('localhost')
+        except socket.gaierror:
+            pass
+        else:
+            if host == localhost:
+                return "localhost"
+        if host == '0.0.0.0':
+            return self.server_name
+##        return host # test
+
+    @property
+    def port(self):
+        return self.server_port
 
 def main():
     import argparse
