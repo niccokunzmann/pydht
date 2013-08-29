@@ -12,6 +12,15 @@ import threading
 import urllib
 
 @fixture()
+def tmpfile(content = ''):
+    import tempfile
+    file = tempfile.TemporaryFile()
+    file.write(content)
+    file.flush()
+    file.seek(0)
+    return file
+
+@fixture()
 def fht(request = None):
     import tempfile
     tempdir = tempfile.mkdtemp()
@@ -32,7 +41,6 @@ def dhtserver():
         print('dhtserver down')
         server.shutdown()
     return server
-
 
 @fixture()
 def hht(request):
@@ -201,6 +209,12 @@ def test_file_system_is_not_in_memory(fht, string):
     fht.add(string)
     assert fht.used_memory_bytes() == 0
 
+def test_used_bytes(fmht, string):
+    fmht.add(string)
+    assert fmht.used_bytes() == len(string)
+
+def test_emppty_hash_table_uses_no_space(fmht):
+    assert fmht.used_bytes() == 0
 
 def test_remove_hash(fmht, string):
     fmht.add(string)
@@ -231,6 +245,51 @@ def test_serve_content(ht, string):
     def fin():
         server.shutdown()
     
+def test_add_local_reference(ht, string):
+    file = tmpfile(string)
+    ht.add_reference('file:///' + file.name, hashed(string))
+    assert ht.knows(hashed(string))
+    assert ht.used_bytes() == 0
+    assert ht.get_bytes(hashed(string)) == string
 
+def test_add_local_file_reference(ht, string):
+    file = tmpfile(string)
+    ht.add_reference('file:///' + file.name)
+    assert ht.knows(hashed(string))
+    assert ht.get_bytes(hashed(string)) == string
 
+def test_add_local_file_reference_file(ht, string):
+    file = tmpfile(string)
+    ht.add_reference('file:///' + file.name)
+    file = ht.get_file()
+    assert file.read() == string
+    assert file.is_valid()
 
+def test_change_reference_gives_error_string(fmht, string):
+    file = tmpfile(string)
+    ht.add_reference('file:///' + file.name)
+    file.write('lala')
+    file.flush()
+    with raises(ContentAltered):
+        ht.get_string(hash)
+    
+def test_change_reference_gives_error_file(fmht, string):
+    file = tmpfile(string)
+    ht.add_reference('file:///' + file.name)
+    file.write(b'lala')
+    file.flush()
+    file = ht.get_file(hash)
+    s = file.read(len(string) + 4)
+    assert s == string + b'lala'
+    assert not file.is_valid()
+    with raises(ContentAltered):
+        file.read()
+    assert not file.is_valid()
+
+def test_file_is_not_valid_when_not_read(fmht, string):
+    file = tmpfile(string)
+    ht.add_reference('file:///' + file.name)
+    file = ht.get_file(hash)
+    assert not file.is_valid()    
+     
+    

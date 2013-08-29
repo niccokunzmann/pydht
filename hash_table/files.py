@@ -83,6 +83,5 @@ class HashingFile:
         while data:
             yield data
             data = self.read(self.default_chunk_size)
-        
 
 __all__ = ['BytesIO', 'SpooledTemporaryFile', 'HashingFile']
