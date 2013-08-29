@@ -212,7 +212,7 @@ def test_remove_hash(fmht, string):
 
 def test_remove_unknown_hash(fmht, string):
     fmht.remove(hashed(string))
-
+    assert not fmht.knows(hashed(string))
 
 def test_serve_address(ht):
     "make a hash table serve its content via http"
@@ -234,4 +234,3 @@ def test_serve_content(ht, string):
 
 
 
-    
