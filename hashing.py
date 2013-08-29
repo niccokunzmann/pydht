@@ -52,5 +52,4 @@ class HashDirectory:
     
 
 __all__ = ['algorithm', 'is_hash', 'is_hex', 'HASHBYTES', 'HASHBITS',
-           'NULL_HASH', 'NoHash', 'path_for_hash',
-           'make_directory_path_for_hash']
+           'NULL_HASH', 'NoHash', 'HashDirectory']
