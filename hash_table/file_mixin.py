@@ -9,10 +9,12 @@ class InFileSystemMixin:
 
     CONTENT = 'content'
 
+    HashDirectory = hashing.HashDirectory
+
     def __init__(self, directory):
         super().__init__()
         self._directory = directory
-        self._hash_directory = hashing.HashDirectory(self._directory)
+        self._hash_directory = self.HashDirectory(self._directory)
 
     def get_base_directory(self):
         return self._directory
