@@ -9,6 +9,7 @@ import sys
 import random
 import pydht.server
 import threading
+import urllib
 
 @fixture()
 def fht(request = None):
@@ -213,4 +214,24 @@ def test_remove_unknown_hash(fmht, string):
     fmht.remove(hashed(string))
 
 
+def test_serve_address(ht):
+    "make a hash table serve its content via http"
+    server = ht.serve_http(('localhost', 3002))
+    assert server.host == 'localhost'
+    assert server.port == 3002
+    assert server.url == 'http://localhost:3002/'
+    def fin():
+        server.shutdown()
 
+def test_serve_content(ht, string):
+    server = ht.serve_http()
+    ht.add(string)
+    file = urllib.request.urlopen(server.url + hashed(string))
+    assert file.read() == string
+    def fin():
+        server.shutdown()
+    
+
+
+
+    
