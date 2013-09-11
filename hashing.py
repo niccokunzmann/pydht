@@ -16,7 +16,8 @@ def is_hex(string):
 
 def is_hash(string):
     """=> whether the object represents a valid hexadecimal hash"""
-    assert isinstance(string, str)
+    if not isinstance(string, str):
+        assert isinstance(string, str), '{} should be str and not {}'.format(repr(string), type(string).__name__)
     return len(string) == HASHBYTES and is_hex(string)
 
 def assure_is_hash(hash):

@@ -6,6 +6,7 @@ class InMemoryMixin:
     def __init__(self):
         super().__init__()
         self._content = {}
+        self._references = {}
 
     def _add_bytes(self, bytes):
         hash = hashing.algorithm(bytes).hexdigest()
@@ -16,7 +17,8 @@ class InMemoryMixin:
         return self._content.get(hash)
 
     def _hashes(self):
-        return self._content.keys()
+        yield from self._content.keys()
+        yield from self._references.keys()
 
     def _remove(self, hash):
         self._content.pop(hash, None)
@@ -32,5 +34,14 @@ class InMemoryMixin:
         for data in self._content.values():
             size += len(data)
         return size
+
+    def _add_url_reference_for_hash(self, url, hash):
+        self._references.setdefault(hash, set())
+        self._references[hash].add(url)
+        return hash
+
+    def _get_reference_url(self, hash):
+        urls = self._references.get(hash)
+        if urls is not None: return next(iter(urls))
 
 __all__ = ['InMemoryMixin']

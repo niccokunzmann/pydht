@@ -1,6 +1,6 @@
 from pytest import *
 from pydht.hash_table import *
-from pydht.errors import HashNotFound
+from pydht.errors import HashNotFound, ContentAltered
 import hashlib
 import io
 import os
@@ -14,7 +14,7 @@ import urllib
 @fixture()
 def tmpfile(content = ''):
     import tempfile
-    file = tempfile.TemporaryFile()
+    file = open(tempfile.mktemp('.test'), 'w+b')
     file.write(content)
     file.flush()
     file.seek(0)
@@ -52,11 +52,11 @@ def hht(request):
 def pytest_generate_tests(metafunc):
     if 'ht' in metafunc.funcargnames:
         metafunc.addcall(param=mht)
-        metafunc.addcall(param=fht)
-        metafunc.addcall(param=hht)
+##        metafunc.addcall(param=fht)
+##        metafunc.addcall(param=hht)
     if 'fmht' in metafunc.funcargnames:
         metafunc.addcall(param=mht)
-        metafunc.addcall(param=fht)
+##        metafunc.addcall(param=fht)
 
 def pytest_funcarg__ht(request):
     return request.param(request)
@@ -261,24 +261,24 @@ def test_add_local_file_reference(ht, string):
 def test_add_local_file_reference_file(ht, string):
     file = tmpfile(string)
     ht.add_reference('file:///' + file.name)
-    file = ht.get_file()
+    file = ht.get_file(hashed(string))
     assert file.read() == string
     assert file.is_valid()
 
 def test_change_reference_gives_error_string(fmht, string):
     file = tmpfile(string)
-    ht.add_reference('file:///' + file.name)
-    file.write('lala')
+    fmht.add_reference('file:///' + file.name)
+    file.write(b'lala')
     file.flush()
     with raises(ContentAltered):
-        ht.get_string(hash)
+        fmht.get_bytes(hashed(string))
     
 def test_change_reference_gives_error_file(fmht, string):
     file = tmpfile(string)
-    ht.add_reference('file:///' + file.name)
+    fmht.add_reference('file:///' + file.name)
     file.write(b'lala')
     file.flush()
-    file = ht.get_file(hash)
+    file = fmht.get_file(hashed(string))
     s = file.read(len(string) + 4)
     assert s == string + b'lala'
     assert not file.is_valid()
@@ -288,8 +288,9 @@ def test_change_reference_gives_error_file(fmht, string):
 
 def test_file_is_not_valid_when_not_read(fmht, string):
     file = tmpfile(string)
-    ht.add_reference('file:///' + file.name)
-    file = ht.get_file(hash)
-    assert not file.is_valid()    
-     
-    
+    fmht.add_reference('file:///' + file.name)
+    file = fmht.get_file(hashed(string))
+    assert not file.is_valid()
+
+
+

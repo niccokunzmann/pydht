@@ -1,7 +1,8 @@
 import io
 import tempfile
 import os
-from pydht import hashing
+from .. import hashing
+from ..errors import ContentAltered
 
 class HashTableFileMixin:
     """A mixin for a hashtable that adds itself to the hashtable when closed"""
@@ -39,7 +40,9 @@ class SpooledTemporaryFile(HashTableFileMixin, tempfile.SpooledTemporaryFile):
 class HashingFile:
     """One can read from this file and the hash is updated"""
 
-    default_chunk_size = 1024
+    default_chunk_size = 4096
+
+    is_hash = staticmethod(hashing.is_hash)
 
     def __init__(self, file, length = None):
         self._file = file
@@ -48,6 +51,11 @@ class HashingFile:
             self.fileno = file.fileno
         self._algorithm = hashing.algorithm()
         self._length = self.get_length_of_file(file, length)
+
+    @property
+    def length(self):
+        """=> length of the file or None"""
+        return self._length
 
     def get_length_of_file(self, file, length = None):
         if length is not None: return length
@@ -79,9 +87,52 @@ class HashingFile:
         return self._length
 
     def __iter__(self):
+        # should be readline but is not required yet
         data = self.read(self.default_chunk_size)
         while data:
             yield data
             data = self.read(self.default_chunk_size)
 
-__all__ = ['BytesIO', 'SpooledTemporaryFile', 'HashingFile']
+class HashCheckingFile(HashingFile):
+
+    def __init__(self, expected_hash, file, length = None):
+        assert self.is_hash(expected_hash)
+        super().__init__(file, length = length)
+        self.expected_hash = expected_hash
+        self._bytes_read = 0
+
+    @property
+    def bytes_read(self):
+        """=> the number of bytes read from this file"""
+        return self._bytes_read
+
+    def is_valid(self):
+        """=> whether the hash of the content matches"""
+        return self.hash == self.expected_hash and self.is_read_completed()
+
+    def is_read_completed(self):
+        """=> whether something can be expected to be read from the file
+        if the file has a length"""
+        return self.bytes_read == self.length
+
+    def read(self, *args):
+        """read from the file and at check for consistency when its end is reached"""
+        bytes = super().read(*args)
+        self._bytes_read += len(bytes)
+        if self.is_read_completed() and not self.is_valid():
+            return self.error_hash_does_not_match()
+        return bytes
+
+    def error_hash_does_not_match(self):
+        """Throw an error that the content differs from the expected"""
+        raise ContentAltered("Expected the hash {} for the ressource {}"
+                             " but got the hash {}".format(self.expected_hash,
+                                                           self._file,
+                                                           self.hash))
+
+class NonCheckingBytesIO(io.BytesIO):
+    @staticmethod
+    def is_valid():
+        return True
+
+__all__ = ['BytesIO', 'SpooledTemporaryFile', 'HashingFile', 'HashCheckingFile']

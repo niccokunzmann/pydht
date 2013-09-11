@@ -1,11 +1,14 @@
-import io
 import os
+import urllib.request
 
 from .. import hashing
 from ..errors import HashNotFound
 from .HashesIterator import HashesIterator
 
+
 class HashTableBase:
+
+    from .files import HashCheckingFile, NonCheckingBytesIO
 
     @staticmethod
     def is_readable_file(file):
@@ -22,6 +25,10 @@ class HashTableBase:
         """=> whether the object can be closed"""
         return hasattr(file, 'close') and callable(file.close)
 
+    @staticmethod
+    def is_reference(self, url):
+        return isinstance(url, str)
+
     def get_base_directory(self):
         return None
 
@@ -33,6 +40,8 @@ Currently suported are bytes, readables, paths"""
             return self._add_bytes(data)
         if self.is_readable_file(data):
             return self._add_readable(data)
+        if self.is_reference(data):
+            return self.add_reference(data)
         return self._add(data)
 
     WRONG_ADD_ARGUMENT = 'Object {object} of type {type} can not be '\
@@ -50,7 +59,7 @@ Currently suported are bytes, readables, paths"""
 
     def _add_bytes(self, data):
         """replace to add a bytes better than putting them into a BytesIO"""
-        return self._add_readable(io.BytesIO(data))
+        return self._add_readable(self.NonCheckingBytesIO(data))
 
     is_hash = staticmethod(hashing.is_hash)
 
@@ -60,9 +69,17 @@ May raise HashNotFound."""
         assert self.is_hash(hash)
         data = self._get_bytes(hash)
         if data is None:
-            self.error_hash_not_found(hash)
+            data = self._get_bytes_from_reference(hash)
+            if data is None:
+                self.error_hash_not_found(hash)
         assert isinstance(data, bytes)
         return data
+
+    def _get_bytes_from_reference(self, hash):
+        result = self._get_file_from_reference(hash)
+        if result:
+            return result.read()
+        return result
 
     def _get_bytes(self, hash):
         """replace to get bytes better than reading them from a file"""
@@ -77,9 +94,24 @@ May raise HasNotFound."""
         assert self.is_hash(hash)
         file = self._get_file(hash)
         if file is None:
-            self.error_hash_not_found(hash)
+            file = self._get_file_from_reference(hash)
+            if file is None:
+                self.error_hash_not_found(hash)
         assert self.is_readable_file(file)
         return file
+
+    def _get_file_from_reference(self, hash):
+        url = self._get_reference_url(hash)
+        if url is not None:
+            return self._get_file_for_url_and_hash(url, hash)
+
+    def _get_file_for_url_and_hash(self, url, hash):
+        return self.HashCheckingFile(hash, self.urlopen(url))
+
+    urlopen = staticmethod(urllib.request.urlopen)
+
+    def _get_reference_url(self, hash):
+        raise NotImplementedError()
 
     def get(self, hash):
         """replace!"""
@@ -94,7 +126,7 @@ May raise HasNotFound."""
 
     def _get_file(self, hash):
         """replace to get a file better than putting all bytes into a BytesIO"""
-        return io.BytesIO(self.get_bytes(hash))
+        return self.NonCheckingBytesIO(self.get_bytes(hash))
 
     def size(self, hash):
         """=> the number of bytes behind the hash"""
@@ -171,15 +203,47 @@ This means that HashNotFound is unlikely to be raised when using size or get*"""
         return 0
     
     def used_file_bytes(self):
-        """=> the number of bytes used by the content"""
+        """=> the number of bytes used by the content in files"""
         value = self._used_file_bytes()
         assert isinstance(value, int)
         assert value >= 0
         return value
 
+    def used_bytes(self):
+        """=> the number of bytes used by the content"""
+        value = self._used_bytes()
+        assert isinstance(value, int)
+        assert value >= 0
+        return value
+
+    def _used_bytes(self):
+        """replace if used bytes are more than in memor and in files"""
+        return self.used_memory_bytes() + self.used_file_bytes()
+
     def serve_http(self, address = ('', 0)):
+        """=> a started http server that serves the content of the hash table"""
         from .. import server
         return server.DHTHTTPServer.serve_hash_table(self, address)
 
+    def add_reference(self, url, hash = None):
+        """=> the hash for the ressource available under the given url
+        the ressource is not copied.
+        If not given the hash is determined.
+        The ressource is available under the hash."""
+        if hash is not None:
+            assert self.is_hash(hash)
+            return self._add_url_reference_for_hash(url, hash)
+        else:
+            return self._add_url_reference(url)
+
+    def _add_url_reference_for_hash(self, url, hash):
+        """replace!"""
+        raise NotImplementedError()
+
+    def _add_url_reference(self, url):
+        """replace to determine the hash without using hashing.hash_for_url"""
+        hash = hashing.hash_for_url(url)
+        return self._add_url_reference_for_hash(url, hash)
+        
 
 __all__ = ['HashTableBase']
