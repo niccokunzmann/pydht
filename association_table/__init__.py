@@ -5,13 +5,22 @@ from . import file_mixin
 from . import http_mixin
 
 class InMemory(memory_mixin.InMemoryMixin, base.AssociationTableBase):
-    pass
+    @staticmethod
+    def default_hash_table(*args, **kw):
+        from pydht.hash_table import InMemory
+        return InMemory(*args, **kw)
 
 class InFileSystem(file_mixin.InFileSystemMixin, base.AssociationTableBase):
-    pass
+    @staticmethod
+    def default_hash_table(*args, **kw):
+        from pydht.hash_table import InFileSystem
+        return InFileSystem(*args, **kw)
 
 class HTTP(http_mixin.HTTPMixin, base.AssociationTableBase):
-    pass
+    @staticmethod
+    def default_hash_table(*args, **kw):
+        from pydht.hash_table import HTTP
+        return HTTP(*args, **kw)
 
 _default = None
 

@@ -62,6 +62,9 @@ def hash_for_url(url, chunksize = 4096):
         hash.update(chunk)
     return hash.hexdigest()
     
+def hash_for_bytes(bytes):
+    return algorithm(bytes).hexdigest()
 
 __all__ = ['algorithm', 'is_hash', 'is_hex', 'HASHBYTES', 'HASHBITS',
-           'NULL_HASH', 'NoHash', 'HashDirectory']
+           'NULL_HASH', 'NoHash', 'HashDirectory', 'hash_for_url',
+           'hash_for_bytes']

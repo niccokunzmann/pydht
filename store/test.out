@@ -1,0 +1,36 @@
+============================= test session starts ==============================
+platform win32 -- Python 3.3.1 -- pytest-2.3.5
+collected 5 items
+
+test/test_store.py ....F
+
+=================================== FAILURES ===================================
+__________________________________ test_tuple __________________________________
+
+store = <pydht.store.store.Store object at 0x02F4E650>
+
+    def test_tuple(store):
+>       hash = store.save((1, 2, 3))
+
+test\test_store.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pydht.store.store.Store object at 0x02F4E650>, object = (1, 2, 3)
+
+    def save(self, object):
+>       return self.Saver(self.association_table).save(object)
+
+store.py:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <pydht.store.store.Saver object at 0x02F4E6D0>, object = (1, 2, 3)
+
+    def save(self, object):
+        cls = object.__class__
+        if cls in self.dispatch:
+            return self.dispatch[cls](self, object)
+>       raise NotImplementedError()
+E       NotImplementedError
+
+store.py:31: NotImplementedError
+====================== 1 failed, 4 passed in 0.21 seconds ======================

@@ -6,8 +6,9 @@ class AssociationTableBase:
 
     from .association import Association
 
-    def __init__(self, hash_table, *args, **kw):
-        super().__init__(*args, **kw)
+    def __init__(self, hash_table = None, *args, **kw):
+        if hash_table is None:
+            hash_table = self.default_hash_table(*args, **kw)
         self.hash_table = hash_table
 
     @staticmethod
@@ -17,7 +18,7 @@ class AssociationTableBase:
     @staticmethod
     def is_association(association):
         """=> whether the association is a Association of hashes"""
-        return isinstance(association, Iterable)
+        return isinstance(association, Iterable) and not isinstance(association, bytes)
 
     def is_association_template(self, association):
         """=> whether the association is a tuple of hashes or None"""
@@ -53,8 +54,7 @@ class AssociationTableBase:
 
     def _add(self, data_or_file):
         """replace to add an other object than mentioned in add"""
-        raise TypeError(self.WRONG_ADD_ARGUMENT.format(
-                            object = data_or_file, type = type(data_or_file)))
+        return self.Association((self.hash_table.add(data_or_file),))
 
     def _add_association(self, hashes):
         hashes_hash = self.hash_table.add(hashes.to_bytes())
@@ -67,7 +67,11 @@ class AssociationTableBase:
 
     def find(self, association):
         assert self.is_association_template(association)
-        assert len(association) >= 1
+        assert len(association) >= 0
+        if len(association) == 1:
+            hash = association[0]
+            if self.hash_table.knows(hash): return {self.Association((hash,))}
+            return set()
         return self._find(association)
 
     def _find(self, association):

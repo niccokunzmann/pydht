@@ -28,5 +28,4 @@ class Association(tuple):
     def from_hashes(cls, tuple):
         return cls((None if e == cls.ANY_HASH else e) for e in tuple)
 
-
 __all__ = ['Association']

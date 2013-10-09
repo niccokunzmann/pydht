@@ -26,7 +26,7 @@ class HashTableBase:
         return hasattr(file, 'close') and callable(file.close)
 
     @staticmethod
-    def is_reference(self, url):
+    def is_reference(url):
         return isinstance(url, str)
 
     def get_base_directory(self):
