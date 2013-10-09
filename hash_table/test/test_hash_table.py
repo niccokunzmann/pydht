@@ -17,7 +17,7 @@ def tmpfile(content = ''):
     file = open(tempfile.mktemp('.test'), 'w+b')
     file.write(content)
     file.flush()
-    file.seek(0)
+##    file.seek(0)
     return file
 
 @fixture()
@@ -279,8 +279,8 @@ def test_change_reference_gives_error_file(fmht, string):
     file.write(b'lala')
     file.flush()
     file = fmht.get_file(hashed(string))
-    s = file.read(len(string) + 4)
-    assert s == string + b'lala'
+    s = file.read(len(string) + 3)
+    assert s == string + b'lal'
     assert not file.is_valid()
     with raises(ContentAltered):
         file.read()

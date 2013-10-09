@@ -16,6 +16,11 @@ class InMemoryMixin:
     def _get_bytes(self, hash):
         return self._content.get(hash)
 
+    def _get_file(self, hash):
+        content = self._get_bytes(hash)
+        if content is not None:
+            return self.NonCheckingBytesIO(content)
+
     def _hashes(self):
         yield from self._content.keys()
         yield from self._references.keys()
